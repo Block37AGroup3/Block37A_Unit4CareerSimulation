@@ -97,6 +97,13 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
   return response.rows[0];
 };
 
+// Fetch items method
+const fetchItems = async() => {
+  const SQL = `SELECT * FROM items;`;
+  const response = await client.query(SQL);
+  return response.rows;
+}
+
 module.exports = {
   client,
   connectDB,
@@ -105,4 +112,5 @@ module.exports = {
   createItem,
   createReview,
   createComment,
+  fetchItems
 };

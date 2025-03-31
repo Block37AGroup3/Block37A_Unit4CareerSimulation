@@ -1,4 +1,4 @@
-const { client, connectDB, createTables, createItem, createUser, createReview, createComment } = require("./db.js");
+const { client, connectDB, createTables, createItem, createUser, createReview, createComment, fetchItems } = require("./db.js");
 
 const express = require("express");
 const app = express();
@@ -62,15 +62,20 @@ const init = async () => {
   ]);
   console.log("Comments created:", { comment1, comment2 });
 
-  // let tableSQL = `` -- Create tables in the db
-  // await client.query(SQL)
-  // console.log('tables created')
-
-  // let seedDataSQL = `` -- Seed data
-  // await client.query(SQL)
-  // console.log('data seeded')
+  const items = await fetchItems();
+  console.log('Items: ', items);
 
   app.listen(port, () => console.log(`listening on PORT ${port}`));
 };
+
+// GET /api/items route
+app.get('/api/items', async (req, res) => {
+  try {
+    const items = await fetchItems();
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
 
 init();

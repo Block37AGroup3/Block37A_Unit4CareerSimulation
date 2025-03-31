@@ -76,6 +76,24 @@ const createItem = async ({ name, description, average_rating }) => {
   const response = await client.query(SQL, [uuid.v4(), name, description, average_rating]);
   return response.rows[0];
 };
+const createReview = async ({ user_id, item_id, rating, review_text }) => {
+  const SQL = /*sql*/ `
+    INSERT INTO reviews (id, user_id, item_id, rating, review_text)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), user_id, item_id, rating, review_text]);
+  return response.rows[0];
+};
+const createComment = async ({ review_id, user_id, comment_text }) => {
+  const SQL = /*sql*/ `
+    INSERT INTO comments (id, review_id, user_id, comment_text)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), review_id, user_id, comment_text]);
+  return response.rows[0];
+};
 
 module.exports = {
   client,
@@ -83,4 +101,6 @@ module.exports = {
   createTables,
   createUser,
   createItem,
+  createReview,
+  createComment,
 };

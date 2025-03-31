@@ -7,15 +7,16 @@ const client = new pg.Client(process.env.DATABASE_URL || "postgres://localhost:5
 const createTables = async () => {
   // Hopefully the right order to prevent foreign key issue
   const SQL = /*sql*/ `
-  DROP TABLE IF EXISTS Comments;
-  DROP TABLE IF EXISTS Reviews;
-  DROP TABLE IF EXISTS Items;
-  DROP TABLE IF EXISTS Users;
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL
-
+  DROP TABLE IF EXISTS comments;
+  DROP TABLE IF EXISTS reviews;
+  DROP TABLE IF EXISTS items;
+  DROP TABLE IF EXISTS users;
+      CREATE TABLE users (
+      id UUID PRIMARY KEY,
+      username VARCHAR(255) NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT now(),
+      updated_at TIMESTAMP DEFAULT now(),
       );
       `;
 };

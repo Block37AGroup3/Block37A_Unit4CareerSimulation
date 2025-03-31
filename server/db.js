@@ -57,6 +57,21 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
+// id UUID PRIMARY KEY,
+// username VARCHAR(255) NOT NULL UNIQUE,
+// password_hash VARCHAR(255) NOT NULL,
+// created_at TIMESTAMP DEFAULT now(),
+// updated_at TIMESTAMP DEFAULT now()
+
+const createUser = async ({ username, password_hash }) => {
+  const SQL = /*sql*/ `
+    INSERT INTO users (id, username, password_hash)
+    VALUES ($1, $2, $3)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), username, await bcrypt.hash(password_hash, 5)]);
+  return response.rows[0];
+};
 
 module.exports = {
   client,

@@ -28,8 +28,8 @@ const createTables = async () => {
     );
       CREATE TABLE reviews (
       id UUID PRIMARY KEY,
-      user_id UUID REFERENCES users(id), ON Delete CASCADE,
-      item_id UUID REFERENCES items(id), ON Delete CASCADE,
+      user_id UUID REFERENCES users(id) NOT NULL ON Delete CASCADE,
+      item_id UUID REFERENCES items(id) NOT NULL ON Delete CASCADE,
       rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
       review_text TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT now(),
@@ -37,8 +37,8 @@ const createTables = async () => {
     );
       CREATE TABLE comments (
       id UUID PRIMARY KEY,
-      review_id UUID REFERENCES reviews(id), ON Delete CASCADE,
-      user_id UUID REFERENCES users(id), ON Delete CASCADE,
+      review_id UUID REFERENCES reviews(id)  NOT NULL ON Delete CASCADE,
+      user_id UUID REFERENCES users(id) NOT NULL ON Delete CASCADE,
       comment_text TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT now(),
       updated_at TIMESTAMP DEFAULT now()

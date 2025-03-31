@@ -57,11 +57,6 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
-// id UUID PRIMARY KEY,
-// username VARCHAR(255) NOT NULL UNIQUE,
-// password_hash VARCHAR(255) NOT NULL,
-// created_at TIMESTAMP DEFAULT now(),
-// updated_at TIMESTAMP DEFAULT now()
 
 const createUser = async ({ username, password_hash }) => {
   const SQL = /*sql*/ `
@@ -72,9 +67,20 @@ const createUser = async ({ username, password_hash }) => {
   const response = await client.query(SQL, [uuid.v4(), username, await bcrypt.hash(password_hash, 5)]);
   return response.rows[0];
 };
+const createItem = async ({ name, description, average_rating }) => {
+  const SQL = /*sql*/ `
+    INSERT INTO items (id, name, description, average_rating)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), name, description, average_rating]);
+  return response.rows[0];
+};
 
 module.exports = {
   client,
   connectDB,
   createTables,
+  createUser,
+  createItem,
 };

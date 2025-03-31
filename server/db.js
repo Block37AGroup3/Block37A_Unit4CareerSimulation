@@ -11,39 +11,40 @@ const createTables = async () => {
   DROP TABLE IF EXISTS reviews;
   DROP TABLE IF EXISTS items;
   DROP TABLE IF EXISTS users;
-      CREATE TABLE users (
-      id UUID PRIMARY KEY,
-      username VARCHAR(255) NOT NULL UNIQUE,
-      password_hash VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT now(),
-      updated_at TIMESTAMP DEFAULT now()
+  CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
       );
-      CREATE TABLE items (
-      id UUID PRIMARY KEY,
-      name VARCHAR(255) NOT NULL UNIQUE,
-      description TEXT,
-      average_rating NUMERIC(2, 1) DEFAULT 0.0,
-      created_at TIMESTAMP DEFAULT now(),
-      updated_at TIMESTAMP DEFAULT now()
+  CREATE TABLE items (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    average_rating NUMERIC(2, 1) DEFAULT 0.0,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
     );
-      CREATE TABLE reviews (
-      id UUID PRIMARY KEY,
-      user_id UUID REFERENCES users(id) NOT NULL ON Delete CASCADE,
-      item_id UUID REFERENCES items(id) NOT NULL ON Delete CASCADE,
-      rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-      review_text TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT now(),
-      updated_at TIMESTAMP DEFAULT now()
+  CREATE TABLE reviews (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON Delete CASCADE,
+    item_id UUID NOT NULL REFERENCES items(id) ON Delete CASCADE,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
     );
-      CREATE TABLE comments (
-      id UUID PRIMARY KEY,
-      review_id UUID REFERENCES reviews(id)  NOT NULL ON Delete CASCADE,
-      user_id UUID REFERENCES users(id) NOT NULL ON Delete CASCADE,
-      comment_text TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT now(),
-      updated_at TIMESTAMP DEFAULT now()
+  CREATE TABLE comments (
+    id UUID PRIMARY KEY,
+    review_id UUID NOT NULL REFERENCES reviews(id) ON Delete CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON Delete CASCADE,
+    comment_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
     );
       `;
+  await client.query(SQL);
 };
 
 const connectDB = async () => {

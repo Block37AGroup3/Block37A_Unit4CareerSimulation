@@ -7,7 +7,7 @@ const port = 3000;
 
 const init = async () => {
   await connectDB();
-
+  await createTables();
   // let tableSQL = `` -- Create tables in the db
   // await client.query(SQL)
   // console.log('tables created')

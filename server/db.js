@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const pg = require("pg");
 const client = new pg.Client(process.env.DATABASE_URL || "postgres://localhost:5432/block37_db");
+const uuid = require("uuid");
+const bcrypt = require("bcrypt");
 
 //create tables
 const createTables = async () => {

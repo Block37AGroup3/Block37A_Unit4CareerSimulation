@@ -22,7 +22,7 @@ const createTables = async () => {
       id UUID PRIMARY KEY,
       name VARCHAR(255) NOT NULL UNIQUE,
       description TEXT,
-      average_rating FLOAT(2,1) DEFAULT 0.0,
+      average_rating NUMERIC(2, 1) DEFAULT 0.0,
       created_at TIMESTAMP DEFAULT now(),
       updated_at TIMESTAMP DEFAULT now()
     );

@@ -60,4 +60,5 @@ const connectDB = async () => {
 module.exports = {
   client,
   connectDB,
+  createTables,
 };

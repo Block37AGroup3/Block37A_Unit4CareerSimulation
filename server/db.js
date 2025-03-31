@@ -13,11 +13,19 @@ const createTables = async () => {
   DROP TABLE IF EXISTS users;
       CREATE TABLE users (
       id UUID PRIMARY KEY,
-      username VARCHAR(255) NOT NULL,
+      username VARCHAR(255) NOT NULL UNIQUE,
       password_hash VARCHAR(255) NOT NULL,
       created_at TIMESTAMP DEFAULT now(),
-      updated_at TIMESTAMP DEFAULT now(),
+      updated_at TIMESTAMP DEFAULT now()
       );
+      CREATE TABLE items (
+      id UUID PRIMARY KEY,
+      name VARCHAR(255) NOT NULL UNIQUE,
+      description TEXT,
+      average_rating FLOAT(2,1) DEFAULT 0.0,
+      created_at TIMESTAMP DEFAULT now(),
+      updated_at TIMESTAMP DEFAULT now()
+    );
       `;
 };
 

@@ -1,9 +1,10 @@
+
 const { client, connectDB, createTables, createItem, createUser, createReview, createComment, fetchItems, fetchItemId } = require("./db.js");
 
 const express = require("express");
 const app = express();
-
 const port = 3000;
+app.use(express.json());
 
 const init = async () => {
   await connectDB();
@@ -63,18 +64,18 @@ const init = async () => {
   console.log("Comments created:", { comment1, comment2 });
 
   const items = await fetchItems();
-  console.log('Items: ', items);
+  console.log("Items: ", items);
 
   app.listen(port, () => console.log(`listening on PORT ${port}`));
 };
 
 // GET /api/items route
-app.get('/api/items', async (req, res) => {
+app.get("/api/items", async (req, res) => {
   try {
     const items = await fetchItems();
     res.json(items);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch products' });
+    res.status(500).json({ error: "Failed to fetch products" });
   }
 });
 // GET items by id
@@ -91,5 +92,48 @@ app.get('/api/items/:itemId', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch product'});
   }
 });
+
+// POST/api/auth/login route
+
+app.post("/api/auth/login", async (req, res, next) => {
+  try {
+    res.send(await authenticateUser(req.body));
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+// POST /api/auth/register route
+app.post("/api/auth/register", async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+    const newUser = await createUser({ username, password_hash: password });
+    res.status(201).json(newUser);
+  } catch (error) {
+    if (error.code === "23505") {
+      // Handle unique constraint violation (e.g., duplicate username)
+      res.status(409).json({ error: "Username already exists" });
+    } else {
+      next(error);
+    }
+  }
+});
+
+//GET /api/items/:itemid
+
+app.get('/api/items/:itemid', async (req, res) => {
+  try {
+    const itemId = req.params; 
+    await fetchItemId(itemId);
+    res.json(itemId);
+  } catch (error) {
+    res.status(404).json({error: 'Failed to fetch product'});
+  }
+}); 
+
+
 
 init();

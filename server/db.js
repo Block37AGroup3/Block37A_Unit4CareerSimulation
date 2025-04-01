@@ -102,7 +102,13 @@ const fetchItems = async() => {
   const SQL = `SELECT * FROM items;`;
   const response = await client.query(SQL);
   return response.rows;
-}
+}; 
+
+const fetchItemId = async(id) => {
+  const SQL = `SELECT * FROM items WHERE id = $1;`;
+  const response = await client.query(SQL, [id]);
+  return response.rows; 
+} 
 
 module.exports = {
   client,
@@ -112,5 +118,6 @@ module.exports = {
   createItem,
   createReview,
   createComment,
-  fetchItems
+  fetchItems, 
+  fetchItemId
 };

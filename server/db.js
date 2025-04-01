@@ -101,6 +101,7 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
 
 // authentication
 const authenticateUser = async ({ username, password_hash }) => {
+  console.log("Authenticating user fucntion...", username);
   const SQL = /*sql*/ `
     SELECT id, password_hash 
     FROM users 

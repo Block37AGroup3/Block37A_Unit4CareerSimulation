@@ -122,18 +122,4 @@ app.post("/api/auth/register", async (req, res, next) => {
   }
 });
 
-//GET /api/items/:itemid
-
-app.get('/api/items/:itemid', async (req, res) => {
-  try {
-    const itemId = req.params; 
-    await fetchItemId(itemId);
-    res.json(itemId);
-  } catch (error) {
-    res.status(404).json({error: 'Failed to fetch product'});
-  }
-}); 
-
-
-
 init();

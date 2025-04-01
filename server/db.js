@@ -4,6 +4,8 @@ const pg = require("pg");
 const client = new pg.Client(process.env.DATABASE_URL || "postgres://localhost:5432/block37_db");
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const JWT = process.env.JWT || "shhh";
 
 //create tables
 const createTables = async () => {
@@ -98,11 +100,11 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
 };
 
 // Fetch items method
-const fetchItems = async() => {
+const fetchItems = async () => {
   const SQL = `SELECT * FROM items;`;
   const response = await client.query(SQL);
   return response.rows;
-}
+};
 
 module.exports = {
   client,
@@ -112,5 +114,5 @@ module.exports = {
   createItem,
   createReview,
   createComment,
-  fetchItems
+  fetchItems,
 };

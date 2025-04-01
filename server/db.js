@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const pg = require("pg");
 const client = new pg.Client(process.env.DATABASE_URL || "postgres://localhost:5432/block37_db");
+const uuid = require("uuid");
+const bcrypt = require("bcrypt");
 
 //create tables
 const createTables = async () => {
@@ -58,8 +60,57 @@ const connectDB = async () => {
   }
 };
 
+const createUser = async ({ username, password_hash }) => {
+  const SQL = /*sql*/ `
+    INSERT INTO users (id, username, password_hash)
+    VALUES ($1, $2, $3)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), username, await bcrypt.hash(password_hash, 5)]);
+  return response.rows[0];
+};
+const createItem = async ({ name, description, average_rating }) => {
+  const SQL = /*sql*/ `
+    INSERT INTO items (id, name, description, average_rating)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), name, description, average_rating]);
+  return response.rows[0];
+};
+const createReview = async ({ user_id, item_id, rating, review_text }) => {
+  const SQL = /*sql*/ `
+    INSERT INTO reviews (id, user_id, item_id, rating, review_text)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), user_id, item_id, rating, review_text]);
+  return response.rows[0];
+};
+const createComment = async ({ review_id, user_id, comment_text }) => {
+  const SQL = /*sql*/ `
+    INSERT INTO comments (id, review_id, user_id, comment_text)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), review_id, user_id, comment_text]);
+  return response.rows[0];
+};
+
+// Fetch items method
+const fetchItems = async() => {
+  const SQL = `SELECT * FROM items;`;
+  const response = await client.query(SQL);
+  return response.rows;
+}
+
 module.exports = {
   client,
   connectDB,
   createTables,
+  createUser,
+  createItem,
+  createReview,
+  createComment,
+  fetchItems
 };

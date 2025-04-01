@@ -1,5 +1,7 @@
 # Block37A_Unit4CareerSimulation
 
+<img width="1280" alt="Screenshot 2025-03-31 at 9 50 46 AM" src="https://github.com/user-attachments/assets/a35519e8-3edf-4e2c-a312-3bcb9070a704" />
+
 ## Users <br />
 id (PRIMARY KEY, UUID, unique) <br />
 username (Unique, varchar(255), not null) <br />
@@ -12,7 +14,7 @@ updated_at (timestamp, default now()) <br />
 id (PRIMARY KEY, UUID, unique) <br />
 name (Unique, varchar(255), not null) <br />
 description (text) <br />
-average_rating (float (2,1), default 0.0) <br />
+average_rating (numeric (2,1), default 0.0) <br />
 created_at (timestamp, default now()) <br />
 updated_at (timestamp, default now()) <br />
 

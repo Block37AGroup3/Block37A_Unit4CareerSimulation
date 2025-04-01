@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const { client, 
   connectDB, 
   createTables, 
@@ -7,12 +8,24 @@ const { client,
   createComment, 
   fetchItems, 
   fetchItemId, 
+=======
+const {
+  client,
+  connectDB,
+  createTables,
+  createItem,
+  createUser,
+  createReview,
+  createComment,
+  fetchItems,
+  authenticateUser,
+>>>>>>> 20cb2f503faa954e8a4ac4428aa07d7f6da4a888
 } = require("./db.js");
 
 const express = require("express");
 const app = express();
-
 const port = 3000;
+app.use(express.json());
 
 const init = async () => {
   await connectDB();
@@ -72,18 +85,47 @@ const init = async () => {
   console.log("Comments created:", { comment1, comment2 });
 
   const items = await fetchItems();
-  console.log('Items: ', items);
+  console.log("Items: ", items);
 
   app.listen(port, () => console.log(`listening on PORT ${port}`));
 };
 
 // GET /api/items route
-app.get('/api/items', async (req, res) => {
+app.get("/api/items", async (req, res) => {
   try {
     const items = await fetchItems();
     res.json(items);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch products' });
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+// POST/api/auth/login route
+
+app.post("/api/auth/login", async (req, res, next) => {
+  try {
+    res.send(await authenticateUser(req.body));
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+// POST /api/auth/register route
+app.post("/api/auth/register", async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+    const newUser = await createUser({ username, password_hash: password });
+    res.status(201).json(newUser);
+  } catch (error) {
+    if (error.code === "23505") {
+      // Handle unique constraint violation (e.g., duplicate username)
+      res.status(409).json({ error: "Username already exists" });
+    } else {
+      next(error);
+    }
   }
 });
 

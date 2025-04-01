@@ -4,6 +4,8 @@ const pg = require("pg");
 const client = new pg.Client(process.env.DATABASE_URL || "postgres://apeli:admin@localhost:5432/block37_db");
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const JWT = process.env.JWT || "shhh";
 
 //create tables
 const createTables = async () => {
@@ -97,12 +99,31 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
   return response.rows[0];
 };
 
+// authentication
+const authenticateUser = async ({ username, password_hash }) => {
+  console.log("Authenticating user fucntion...", username);
+  const SQL = /*sql*/ `
+    SELECT id, password_hash 
+    FROM users 
+    WHERE username = $1;
+  `;
+  const response = await client.query(SQL, [username]);
+  if (!response.rows.length || (await bcrypt.compare(password_hash, response.rows[0].password_hash)) === false) {
+    const error = Error("not authorized");
+    error.status = 401;
+    throw error;
+  }
+  const token = await jwt.sign({ id: response.rows[0].id }, JWT);
+  return { token };
+};
+
 // Fetch items method
-const fetchItems = async() => {
+const fetchItems = async () => {
   const SQL = `SELECT * FROM items;`;
   const response = await client.query(SQL);
   return response.rows;
 };
+<<<<<<< HEAD
 
 // Fetch itemId method
 
@@ -111,6 +132,8 @@ const fetchItemId = async(id) => {
   const response = await client.query(SQL);
   return response.rows;
 };
+=======
+>>>>>>> 20cb2f503faa954e8a4ac4428aa07d7f6da4a888
 
 module.exports = {
   client,
@@ -121,5 +144,9 @@ module.exports = {
   createReview,
   createComment,
   fetchItems,
+<<<<<<< HEAD
   fetchItemId
+=======
+  authenticateUser,
+>>>>>>> 20cb2f503faa954e8a4ac4428aa07d7f6da4a888
 };

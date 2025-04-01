@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const pg = require("pg");
-const client = new pg.Client(process.env.DATABASE_URL || "postgres://localhost:5432/block37_db");
+const client = new pg.Client(process.env.DATABASE_URL || "postgres://apeli:admin@localhost:5432/block37_db");
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
 
@@ -102,7 +102,15 @@ const fetchItems = async() => {
   const SQL = `SELECT * FROM items;`;
   const response = await client.query(SQL);
   return response.rows;
-}
+};
+
+// Fetch itemId method
+
+const fetchItemId = async(id) => {
+  const SQL = `SELECT * FROM items WHERE id = $1;`;
+  const response = await client.query(SQL);
+  return response.rows;
+};
 
 module.exports = {
   client,
@@ -112,5 +120,6 @@ module.exports = {
   createItem,
   createReview,
   createComment,
-  fetchItems
+  fetchItems,
+  fetchItemId
 };

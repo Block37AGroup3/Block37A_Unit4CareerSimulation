@@ -1,4 +1,13 @@
-const { client, connectDB, createTables, createItem, createUser, createReview, createComment, fetchItems } = require("./db.js");
+const { client, 
+  connectDB, 
+  createTables, 
+  createItem, 
+  createUser, 
+  createReview, 
+  createComment, 
+  fetchItems, 
+  fetchItemId, 
+} = require("./db.js");
 
 const express = require("express");
 const app = express();
@@ -77,5 +86,19 @@ app.get('/api/items', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
+
+//GET /api/items/:itemid
+
+app.get('/api/items/:itemid', async (req, res) => {
+  try {
+    const itemId = req.params; 
+    await fetchItemId(itemId);
+    res.json(itemId);
+  } catch (error) {
+    res.status(404).json({error: 'Failed to fetch product'});
+  }
+}); 
+
+
 
 init();

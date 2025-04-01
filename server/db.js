@@ -99,6 +99,23 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
   return response.rows[0];
 };
 
+// authentication
+const authenticateUser = async ({ username, password_hash }) => {
+  const SQL = /*sql*/ `
+    SELECT id, password_hash 
+    FROM users 
+    WHERE username = $1;
+  `;
+  const response = await client.query(SQL, [username]);
+  if (!response.rows.length || (await bcrypt.compare(password_hash, response.rows[0].password_hash)) === false) {
+    const error = Error("not authorized");
+    error.status = 401;
+    throw error;
+  }
+  const token = await jwt.sign({ id: response.rows[0].id }, JWT);
+  return { token };
+};
+
 // Fetch items method
 const fetchItems = async () => {
   const SQL = `SELECT * FROM items;`;
@@ -115,4 +132,5 @@ module.exports = {
   createReview,
   createComment,
   fetchItems,
+  authenticateUser,
 };

@@ -177,6 +177,20 @@ app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, nex
   try {
     const { rating, review_text } = req.body;
     const { userId, reviewId } = req.params;
+    // pulled from the post review request for error handling we need to check the same things.
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Rating must be a number between 1 and 5." });
+    }
+    // pulled from the post review request for error handling we need to check the same things.
+    if (!review_text || typeof review_text !== "string" || review_text.trim() === "") {
+      return res.status(400).json({ error: "Review text is required." });
+    }
+    // this checks that the user is logged in.
+    if (userId !== req.user.id) {
+      return res.status(403).json({ error: "You are not authorized to update this review." });
+    }
+    const SQL = /*sql*/ `
+      UPDATE reviews SET rating = $1, review_text = $2, updated_at = NOW()`;
   } catch (error) {}
 });
 

@@ -10,6 +10,9 @@ const {
   fetchItemId,
   authenticateUser,
   findUserByToken,
+  findReviewById,
+  findReviewsByMe, 
+  findCommentsByMe,
   findReviewsByMe,
   getReviewsByItemId,
 } = require("./db.js");
@@ -185,6 +188,37 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   }
 });
 
+//GET review for item by review id 
+
+app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
+  const { itemId, reviewId } = req.params;
+  try {
+    const item = await fetchItemId(itemId); 
+
+  if (item.length === 0) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+
+  const review = await findReviewById(itemId, reviewId);
+
+  if (review) {
+    res.json({
+      item_id: itemId,
+      review_id: review.review_id,
+      review_text: review.review_text, 
+      rating: review.rating,
+      username: review.username,
+      created_at: review.created_at
+    });
+  } else {
+    res.status(404).json({ error: 'Review not found' });
+  }
+} catch (error) {
+  console.error("Error fetching review:", error);
+  res.status(500).json({ error: "Server error" });
+}
+});
+
 //GET /api/reviews/me route
 app.get("/api/reviews/me", isLoggedIn, async (req, res) => {
   try {
@@ -198,6 +232,22 @@ app.get("/api/reviews/me", isLoggedIn, async (req, res) => {
   } catch (error) {
     console.error("Error fetching user reviews:", error);
     res.status(500).json({ error: "Failed to fetch reviews" });
+  }
+});
+
+//GET /api/comments/me route
+app.get('/api/comments/me', isLoggedIn, async (req, res) => {
+  try {
+    const comments = await findCommentsByMe(req.user.id);
+   
+    if (comments.length > 0) {
+      res.json(comments);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    console.error("Error fetching user comments:", error);
+    res.status(500).json({ error: "Failed to fetch comments" });
   }
 });
 

@@ -9,7 +9,8 @@ const {
   fetchItems,
   fetchItemId,
   authenticateUser,
-  findUserByToken,
+  findUserByToken, 
+  findReviewById,
   findReviewsByMe
 } = require("./db.js");
 
@@ -166,6 +167,37 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   }
 });
 
+//GET review for item by review id 
+
+app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
+  const { itemId, reviewId } = req.params;
+  try {
+    const item = await fetchItemId(itemId); 
+
+  if (item.length === 0) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+
+  const review = await findReviewById(itemId, reviewId);
+
+  if (review) {
+    res.json({
+      item_id: itemId,
+      review_id: review.review_id,
+      review_text: review.review_text, 
+      rating: review.rating,
+      username: review.username,
+      created_at: review.created_at
+    });
+  } else {
+    res.status(404).json({ error: 'Review not found' });
+  }
+} catch (error) {
+  console.error("Error fetching review:", error);
+  res.status(500).json({ error: "Server error" });
+}
+});
+
 //GET /api/reviews/me route
 
 app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
@@ -182,7 +214,6 @@ app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch reviews" });
   }
 });
-
 
 init();
 

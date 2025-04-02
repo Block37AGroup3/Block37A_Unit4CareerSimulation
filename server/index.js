@@ -13,7 +13,6 @@ const {
   findReviewById,
   findReviewsByMe, 
   findCommentsByMe,
-  findReviewsByMe,
   getReviewsByItemId,
 } = require("./db.js");
 

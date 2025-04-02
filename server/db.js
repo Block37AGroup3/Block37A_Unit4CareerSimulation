@@ -1,7 +1,10 @@
 require("dotenv").config();
 
 const pg = require("pg");
-const client = new pg.Client(process.env.DATABASE_URL || "postgres://localhost:5432/block37_db");
+const client = new pg.Client(
+  process.env.DATABASE_URL ||
+    "postgres://MainUser:Decollegez1!@localhost:5432/block37_db"
+);
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -70,7 +73,11 @@ const createUser = async ({ username, password_hash }) => {
     VALUES ($1, $2, $3)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), username, await bcrypt.hash(password_hash, 5)]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    username,
+    await bcrypt.hash(password_hash, 5),
+  ]);
   return response.rows[0];
 };
 
@@ -80,7 +87,12 @@ const createItem = async ({ name, description, average_rating }) => {
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), name, description, average_rating]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    name,
+    description,
+    average_rating,
+  ]);
   return response.rows[0];
 };
 
@@ -90,7 +102,13 @@ const createReview = async ({ user_id, item_id, rating, review_text }) => {
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), user_id, item_id, rating, review_text]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    user_id,
+    item_id,
+    rating,
+    review_text,
+  ]);
   return response.rows[0];
 };
 
@@ -100,8 +118,26 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), review_id, user_id, comment_text]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    review_id,
+    user_id,
+    comment_text,
+  ]);
   return response.rows[0];
+};
+
+onst checkItemExists = async (item_id) => {
+  const SQL = /*sql*/ `
+    SELECT id FROM items
+    WHERE id = $1;
+  `;
+  const response = await client.query(SQL, [item_id]);
+  if (response.rows.length === 0) {
+    const error = new Error(`Item with ID: ${item_id} not found.`);
+    error.status = 404; // Set the HTTP status code to 404
+    throw error;
+  }
 };
 
 // authentication
@@ -175,6 +211,7 @@ const findReviewsByMe = async (userId) => {
     throw new Error("Database error");
   }
 };
+}
 
 module.exports = {
   client,
@@ -184,9 +221,6 @@ module.exports = {
   createItem,
   createReview,
   createComment,
-  fetchItems,
-  fetchItemId,
-  authenticateUser,
-  findUserByToken,
+  fetchItems
   findReviewsByMe
 };

@@ -10,6 +10,7 @@ const {
   fetchItemId,
   authenticateUser,
   findUserByToken,
+  findReviewById,
   findReviewsByMe, 
   findCommentsByMe
 } = require("./db.js");

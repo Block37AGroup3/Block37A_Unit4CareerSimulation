@@ -224,4 +224,4 @@ app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
   }
 });
 
-init();
+

@@ -9,7 +9,8 @@ const {
   fetchItems,
   fetchItemId,
   authenticateUser,
-  findUserByToken
+  findUserByToken,
+  destroyReviewId
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -162,6 +163,34 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
     res.status(201).json(review);
   } catch (ex) {
     next(ex);
+  }
+});
+
+// DELETE /api/users/:userId/reviews/:reviewId route
+app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) => {
+  try {
+    // Ensuring the user is authenticated
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized: Please log in' });
+    }
+
+    // Checking if the review exists - WAITING ON SOMEONE ELSE HERE
+    const review = await getReviewById(reviewId);
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+
+    // Ensuring the review belongs to the logged-in user
+    if (review.user_id !== req.user.id) {
+      return res.status(403).json({ message: 'Forbidden: You cannot delete this review' });
+    }
+
+    await destroyReviewId(userId, reviewId);
+
+    // Return 204 No Content status code
+    return res.status(204).send();
+  } catch (error) {
+      return res.status(500).json({ message: 'Internal server error' });
   }
 });
 

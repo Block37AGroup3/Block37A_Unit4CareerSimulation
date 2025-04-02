@@ -139,6 +139,18 @@ const fetchItemId = async(id) => {
   return response.rows;
 };
 
+// Destroy reviewId method
+const destroyReviewId = async (userId, reviewId) => {
+  try {
+    const SQL = `DELETE FROM reviews WHERE user_id = $1 AND id = $2 RETURNING *;`;
+    const result = await pool.query(SQL,[userId, reviewId]);
+    return result.rowCount > 0;
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    throw error;
+  }
+};
+
 const findUserByToken = async (token) => {
   try {
     console.log("Received token:", token);
@@ -170,4 +182,5 @@ module.exports = {
   fetchItemId,
   authenticateUser,
   findUserByToken,
+  destroyReviewId
 };

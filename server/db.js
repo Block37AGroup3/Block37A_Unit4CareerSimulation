@@ -127,7 +127,7 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
   return response.rows[0];
 };
 
-onst checkItemExists = async (item_id) => {
+const checkItemExists = async (item_id) => {
   const SQL = /*sql*/ `
     SELECT id FROM items
     WHERE id = $1;
@@ -211,7 +211,6 @@ const findReviewsByMe = async (userId) => {
     throw new Error("Database error");
   }
 };
-}
 
 module.exports = {
   client,
@@ -221,6 +220,6 @@ module.exports = {
   createItem,
   createReview,
   createComment,
-  fetchItems
+  fetchItems,
   findReviewsByMe
 };

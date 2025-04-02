@@ -222,7 +222,10 @@ module.exports = {
   createItem,
   createReview,
   createComment,
+  authenticateUser,
+  findUserByToken,
   fetchItems,
+  fetchItemId,
   findReviewsByMe,
   getReviewsByItemId,
 };

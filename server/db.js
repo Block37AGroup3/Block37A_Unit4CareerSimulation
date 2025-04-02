@@ -158,7 +158,6 @@ const findUserByToken = async (token) => {
   }
 };
 
-<<<<<<< HEAD
 //GET review by itemId and reviewId
 
 const findReviewById = async (itemId, reviewId) => {
@@ -178,7 +177,10 @@ const findReviewById = async (itemId, reviewId) => {
     return response.rows[0];
   } catch (error) {
     console.error("Error finding review:", error);
-=======
+    throw new Error("Database error");
+  }
+};   
+
 const findReviewsByMe = async (userId) => {
   try {
     const SQL = `
@@ -193,7 +195,6 @@ const findReviewsByMe = async (userId) => {
     return response.rows;
   } catch (error) {
     console.error("Error fetching reviews for user:", error);
->>>>>>> main
     throw new Error("Database error");
   }
 };
@@ -210,9 +211,6 @@ module.exports = {
   fetchItemId,
   authenticateUser,
   findUserByToken,
-<<<<<<< HEAD
-  findReviewById
-=======
+  findReviewById,
   findReviewsByMe
->>>>>>> main
-};
+  }; 

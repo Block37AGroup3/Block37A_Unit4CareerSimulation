@@ -9,13 +9,9 @@ const {
   fetchItems,
   fetchItemId,
   authenticateUser,
-<<<<<<< HEAD
   findUserByToken, 
-  findReviewById
-=======
-  findUserByToken,
+  findReviewById,
   findReviewsByMe
->>>>>>> 
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -171,7 +167,6 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   }
 });
 
-<<<<<<< HEAD
 //GET review for item by review id 
 
 app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
@@ -203,7 +198,6 @@ app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
 }
 });
 
-=======
 //GET /api/reviews/me route
 
 app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
@@ -221,7 +215,5 @@ app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
   }
 });
 
-
->>>>>>> main
 init();
 

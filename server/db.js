@@ -127,6 +127,19 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
   return response.rows[0];
 };
 
+onst checkItemExists = async (item_id) => {
+  const SQL = /*sql*/ `
+    SELECT id FROM items
+    WHERE id = $1;
+  `;
+  const response = await client.query(SQL, [item_id]);
+  if (response.rows.length === 0) {
+    const error = new Error(`Item with ID: ${item_id} not found.`);
+    error.status = 404; // Set the HTTP status code to 404
+    throw error;
+  }
+};
+
 // authentication
 const authenticateUser = async ({ username, password_hash }) => {
   console.log("Authenticating user function...", username);

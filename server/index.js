@@ -9,7 +9,7 @@ const {
   fetchItems,
   fetchItemId,
   authenticateUser,
-  findUserByToken
+  findUserByToken,
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -44,10 +44,16 @@ const init = async () => {
   console.log("Helpful CURL commands to test:");
   console.log(`curl -X GET http://localhost:${port}/api/items`);
   console.log(`curl -X GET http://localhost:${port}/api/items/[ITEM_ID]`);
-  console.log(`curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`);
-  console.log(`curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`);
+  console.log(
+    `curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`
+  );
+  console.log(
+    `curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`
+  );
   console.log(`curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
-  console.log(`curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`);
+  console.log(
+    `curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`
+  );
 
   // TODO:
   // Add CURL command for GET items/itemid/reviews
@@ -163,6 +169,15 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   } catch (ex) {
     next(ex);
   }
+});
+
+//Define PUT /api/users/:userId/reviews/:reviewId route
+
+app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, next) => {
+  try {
+    const { rating, review_text } = req.body;
+    const { userId, reviewId } = req.params;
+  } catch (error) {}
 });
 
 init();

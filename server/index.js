@@ -9,7 +9,7 @@ const {
   fetchItems,
   fetchItemId,
   authenticateUser,
-  findUserByToken
+  findUserByToken,
 } = require("./db.js");
 
 const express = require("express");
@@ -38,12 +38,58 @@ const init = async () => {
   await createTables();
   console.log("Tables created.");
 
-  const [moe, lucy, larry, ethyl] = await Promise.all([
+  const [
+    moe,
+    lucy,
+    larry,
+    ethyl,
+    alice,
+    bob,
+    charlie,
+    dave,
+    eve,
+    frank,
+    grace,
+    henry,
+    isabel,
+    jack,
+    kate,
+    leo,
+    mia,
+    nate,
+    olivia,
+    peter,
+    quinn,
+    rachel,
+    sam,
+    tina,
+  ] = await Promise.all([
     createUser({ username: "moe", password_hash: "moe_pw" }),
     createUser({ username: "lucy", password_hash: "lucy_pw" }),
     createUser({ username: "larry", password_hash: "larry_pw" }),
     createUser({ username: "ethyl", password_hash: "ethyl_pw" }),
+    createUser({ username: "alice", password_hash: "alice_pw" }),
+    createUser({ username: "bob", password_hash: "bob_pw" }),
+    createUser({ username: "charlie", password_hash: "charlie_pw" }),
+    createUser({ username: "dave", password_hash: "dave_pw" }),
+    createUser({ username: "eve", password_hash: "eve_pw" }),
+    createUser({ username: "frank", password_hash: "frank_pw" }),
+    createUser({ username: "grace", password_hash: "grace_pw" }),
+    createUser({ username: "henry", password_hash: "henry_pw" }),
+    createUser({ username: "isabel", password_hash: "isabel_pw" }),
+    createUser({ username: "jack", password_hash: "jack_pw" }),
+    createUser({ username: "kate", password_hash: "kate_pw" }),
+    createUser({ username: "leo", password_hash: "leo_pw" }),
+    createUser({ username: "mia", password_hash: "mia_pw" }),
+    createUser({ username: "nate", password_hash: "nate_pw" }),
+    createUser({ username: "olivia", password_hash: "olivia_pw" }),
+    createUser({ username: "peter", password_hash: "peter_pw" }),
+    createUser({ username: "quinn", password_hash: "quinn_pw" }),
+    createUser({ username: "rachel", password_hash: "rachel_pw" }),
+    createUser({ username: "sam", password_hash: "sam_pw" }),
+    createUser({ username: "tina", password_hash: "tina_pw" }),
   ]);
+
   console.log("Users created:", { moe, lucy, larry, ethyl });
 
   const [widget, gadget] = await Promise.all([
@@ -159,24 +205,23 @@ app.post("/api/auth/register", async (req, res, next) => {
 });
 
 // GET /api/auth/me route
-app.get('/api/auth/me', isLoggedIn, (req, res, next)=> {
+app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
   try {
     res.send(req.user);
-  }
-  catch(ex){  
+  } catch (ex) {
     next(ex);
   }
 });
 
 // POST /api/items/:itemId/reviews
-app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
+app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   try {
     const { rating, review_text } = req.body;
-    if (typeof rating !== 'number' || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be a number between 1 and 5.' });
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Rating must be a number between 1 and 5." });
     }
-    if (!review_text || typeof review_text !== 'string' || review_text.trim() === '') {
-      return res.status(400).json({ error: 'Review text is required.' });
+    if (!review_text || typeof review_text !== "string" || review_text.trim() === "") {
+      return res.status(400).json({ error: "Review text is required." });
     }
 
     const item = await fetchItemId(req.params.itemId);
@@ -184,10 +229,10 @@ app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    const existingReview = await client.query(
-      'SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2',
-      [req.user.id, req.params.itemId]
-    );
+    const existingReview = await client.query("SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2", [
+      req.user.id,
+      req.params.itemId,
+    ]);
 
     if (existingReview.rows.length > 0) {
       return res.status(409).json({ error: "You have already reviewed this item." });
@@ -197,11 +242,10 @@ app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
       user_id: req.user.id,
       item_id: req.params.itemId,
       rating: req.body.rating,
-      review_text: req.body.review_text
+      review_text: req.body.review_text,
     });
     res.status(201).json(review);
-  }
-  catch(ex){
+  } catch (ex) {
     next(ex);
   }
 });

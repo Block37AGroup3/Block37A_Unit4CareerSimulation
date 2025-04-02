@@ -7,6 +7,7 @@ const {
   createReview,
   createComment,
   fetchItems,
+  fetchItemId,
   authenticateUser,
   findUserByToken
 } = require("./db.js");
@@ -163,6 +164,44 @@ app.get('/api/auth/me', isLoggedIn, (req, res, next)=> {
     res.send(req.user);
   }
   catch(ex){  
+    next(ex);
+  }
+});
+
+// POST /api/items/:itemId/reviews
+app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
+  try {
+    const { rating, review_text } = req.body;
+    if (typeof rating !== 'number' || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be a number between 1 and 5.' });
+    }
+    if (!review_text || typeof review_text !== 'string' || review_text.trim() === '') {
+      return res.status(400).json({ error: 'Review text is required.' });
+    }
+
+    const item = await fetchItemId(req.params.itemId);
+    if (item.length === 0) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+
+    const existingReview = await client.query(
+      'SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2',
+      [req.user.id, req.params.itemId]
+    );
+
+    if (existingReview.rows.length > 0) {
+      return res.status(409).json({ error: "You have already reviewed this item." });
+    }
+
+    const review = await createReview({
+      user_id: req.user.id,
+      item_id: req.params.itemId,
+      rating: req.body.rating,
+      review_text: req.body.review_text
+    });
+    res.status(201).json(review);
+  }
+  catch(ex){
     next(ex);
   }
 });

@@ -158,6 +158,24 @@ const findUserByToken = async (token) => {
   }
 };
 
+const findReviewsByMe = async (userId) => {
+  try {
+    const SQL = `
+      SELECT reviews.id AS review_id, reviews.review_text, reviews.rating, reviews.created_at, items.name AS item_name
+      FROM reviews
+      JOIN items ON reviews.item_id = items.id
+      WHERE reviews.user_id = $1;
+    `;
+
+    const response = await client.query(SQL, [userId]);
+
+    return response.rows;
+  } catch (error) {
+    console.error("Error fetching reviews for user:", error);
+    throw new Error("Database error");
+  }
+};
+
 module.exports = {
   client,
   connectDB,
@@ -170,4 +188,5 @@ module.exports = {
   fetchItemId,
   authenticateUser,
   findUserByToken,
+  findReviewsByMe
 };

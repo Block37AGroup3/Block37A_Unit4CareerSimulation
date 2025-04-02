@@ -9,7 +9,8 @@ const {
   fetchItems,
   fetchItemId,
   authenticateUser,
-  findUserByToken
+  findUserByToken,
+  findReviewsByMe
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -165,4 +166,23 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   }
 });
 
+//GET /api/reviews/me route
+
+app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
+  try {
+    const reviews = await findReviewsByMe(req.user.id);
+   
+    if (reviews.length > 0) {
+      res.json(reviews);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    console.error("Error fetching user reviews:", error);
+    res.status(500).json({ error: "Failed to fetch reviews" });
+  }
+});
+
+
 init();
+

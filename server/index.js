@@ -166,7 +166,6 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   }
 });
 
-<<<<<<< HEAD
 //GET /api/reviews/me route
 
 app.get('/api/reviews/me', isLoggedIn, async (req, res) => {

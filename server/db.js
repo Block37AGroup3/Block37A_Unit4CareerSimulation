@@ -109,11 +109,14 @@ const authenticateUser = async ({ username, password_hash }) => {
   `;
   const response = await client.query(SQL, [username]);
   if (!response.rows.length || (await bcrypt.compare(password_hash, response.rows[0].password_hash)) === false) {
+    console.error("Invalid username or password");
     const error = Error("not authorized");
     error.status = 401;
     throw error;
   }
-  const token = await jwt.sign({ id: response.rows[0].id }, JWT);
+
+  const token = jwt.sign({ id: response.rows[0].id }, process.env.JWT, { algorithm: "HS256" });
+  console.log("Generated Token:", token);
   return { token };
 };
 
@@ -122,6 +125,24 @@ const fetchItems = async () => {
   const SQL = `SELECT * FROM items;`;
   const response = await client.query(SQL);
   return response.rows;
+};
+
+const findUserByToken = async (token) => {
+  try {
+    const payload = jwt.verify(token, process.env.JWT);
+    console.log("Decoded payload:", payload);
+
+    const SQL = `SELECT * FROM users WHERE id = $1;`;
+    const response = await client.query(SQL, [payload.id]);
+
+    if (!response.rows.length) {
+      throw new Error("User not found");
+    }
+    return response.rows[0];
+  } catch (ex) {
+    console.error("Error decoding token:", ex);
+    throw new Error("Not authorized");
+  }
 };
 
 module.exports = {

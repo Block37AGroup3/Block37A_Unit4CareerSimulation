@@ -8,12 +8,28 @@ const {
   createComment,
   fetchItems,
   authenticateUser,
+  findUserByToken
 } = require("./db.js");
 
 const express = require("express");
 const app = express();
 const port = 3000;
 app.use(express.json());
+
+const isLoggedIn = async (req, res, next) => {
+  console.log("Authorization Header:", req.headers.authorization);
+  try {
+    if (!req.headers.authorization) {
+      throw new Error("No authorization header");
+    }
+    const token = req.headers.authorization.split(" ")[1];
+    req.user = await findUserByToken(token);
+    next();
+  } catch (ex) {
+    console.error("Error in isLoggedIn:", ex);
+    res.status(401).json({ error: "Not authorized" });
+  }
+};
 
 const init = async () => {
   await connectDB();
@@ -114,6 +130,16 @@ app.post("/api/auth/register", async (req, res, next) => {
     } else {
       next(error);
     }
+  }
+});
+
+// GET /api/auth/me route
+app.get('/api/auth/me', isLoggedIn, (req, res, next)=> {
+  try {
+    res.send(req.user);
+  }
+  catch(ex){  
+    next(ex);
   }
 });
 

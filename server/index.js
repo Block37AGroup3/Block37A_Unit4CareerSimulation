@@ -37,7 +37,7 @@ const init = async () => {
   await connectDB();
   await createTables();
   console.log("Tables created.");
-
+  // user seeding
   const [
     moe,
     lucy,
@@ -91,7 +91,7 @@ const init = async () => {
   ]);
 
   console.log("Users created:", { moe, lucy, larry, ethyl });
-
+  // item seeding
   const [
     widget,
     gadget,
@@ -216,7 +216,7 @@ const init = async () => {
     }),
   ]);
   console.log("Items created:", { widget, gadget });
-
+  //review seeding
   const [
     review1,
     review2,
@@ -361,7 +361,7 @@ const init = async () => {
     }),
   ]);
   console.log("Reviews created:", { review1, review2 });
-  //
+  // comment seeding
   const [
     comment1,
     comment2,

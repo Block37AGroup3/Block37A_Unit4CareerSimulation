@@ -104,6 +104,7 @@ app.get("/api/items", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
+
 // GET items by id
 app.get("/api/items/:itemId", async (req, res) => {
   try {
@@ -127,8 +128,8 @@ app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
     next(ex);
   }
 });
-// POST/api/auth/login route
 
+// POST/api/auth/login route
 app.post("/api/auth/login", async (req, res, next) => {
   try {
     res.send(await authenticateUser(req.body));

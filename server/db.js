@@ -101,7 +101,7 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
 
 // authentication
 const authenticateUser = async ({ username, password_hash }) => {
-  console.log("Authenticating user fucntion...", username);
+  console.log("Authenticating user function...", username);
   const SQL = /*sql*/ `
     SELECT id, password_hash 
     FROM users 
@@ -127,8 +127,16 @@ const fetchItems = async () => {
   return response.rows;
 };
 
+// Fetch itemId method
+const fetchItemId = async(id) => {
+  const SQL = `SELECT * FROM items WHERE id = $1;`;
+  const response = await client.query(SQL);
+  return response.rows;
+};
+
 const findUserByToken = async (token) => {
   try {
+    console.log("Received token:", token);
     const payload = jwt.verify(token, process.env.JWT);
     console.log("Decoded payload:", payload);
 
@@ -140,7 +148,7 @@ const findUserByToken = async (token) => {
     }
     return response.rows[0];
   } catch (ex) {
-    console.error("Error decoding token:", ex);
+    console.error("Error decoding token:", ex.message);
     throw new Error("Not authorized");
   }
 };

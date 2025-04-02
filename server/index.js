@@ -16,6 +16,22 @@ const app = express();
 const port = 3000;
 app.use(express.json());
 
+const isLoggedIn = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+
+    if (!token) {
+      return res.status(401).json({ error: "Token is required" });
+    }
+
+    req.user = await findUserByToken(token);
+    next();
+  } catch (ex) {
+    console.error("Error in isLoggedIn middleware:", ex);
+    next(ex);
+  }
+};
+
 const init = async () => {
   await connectDB();
   await createTables();

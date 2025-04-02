@@ -11,7 +11,7 @@ const {
   authenticateUser,
   findUserByToken,
   findReviewsByMe,
-  checkItemExists,
+  getReviewsByItemId,
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");

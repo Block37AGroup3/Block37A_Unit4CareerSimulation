@@ -127,17 +127,13 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
   return response.rows[0];
 };
 
-const checkItemExists = async (item_id) => {
+const getReviewsByItemId = async (item_id) => {
   const SQL = /*sql*/ `
     SELECT * FROM items
     WHERE id = $1;
   `;
   const response = await client.query(SQL, [item_id]);
-  if (response.rows.length === 0) {
-    const error = new Error(`Item with ID: ${item_id} not found.`);
-    error.status = 404; // Set the HTTP status code to 404
-    throw error;
-  }
+  return response.rows;
 };
 
 // authentication
@@ -228,5 +224,5 @@ module.exports = {
   createComment,
   fetchItems,
   findReviewsByMe,
-  checkItemExists,
+  getReviewsByItemId,
 };

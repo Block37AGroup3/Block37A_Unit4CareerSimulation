@@ -10,6 +10,8 @@ const {
   fetchItemId,
   authenticateUser,
   findUserByToken,
+  findReviewsByMe,
+  findUserByToken,
   destroyReviewId
 } = require("./db.js");
 
@@ -163,6 +165,22 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
     res.status(201).json(review);
   } catch (ex) {
     next(ex);
+  }
+});
+
+//GET /api/reviews/me route
+app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
+  try {
+    const reviews = await findReviewsByMe(req.user.id);
+   
+    if (reviews.length > 0) {
+      res.json(reviews);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    console.error("Error fetching user reviews:", error);
+    res.status(500).json({ error: "Failed to fetch reviews" });
   }
 });
 

@@ -16,21 +16,6 @@ const app = express();
 const port = 3000;
 app.use(express.json());
 
-const isLoggedIn = async (req, res, next) => {
-  console.log("Authorization Header:", req.headers.authorization);
-  try {
-    if (!req.headers.authorization) {
-      throw new Error("No authorization header");
-    }
-    const token = req.headers.authorization.split(" ")[1];
-    req.user = await findUserByToken(token);
-    next();
-  } catch (ex) {
-    console.error("Error in isLoggedIn:", ex);
-    res.status(401).json({ error: "Not authorized" });
-  }
-};
-
 const init = async () => {
   await connectDB();
   await createTables();
@@ -104,20 +89,28 @@ app.get("/api/items", async (req, res) => {
   }
 });
 // GET items by id
-app.get('/api/items/:itemId', async (req, res) => {
+app.get("/api/items/:itemId", async (req, res) => {
   try {
     const itemId = req.params.itemId;
     const items = await fetchItemId(itemId);
     if (items.length === 0) {
-      return res.status(404).json({ error: 'Item not found'});
+      return res.status(404).json({ error: "Item not found" });
     }
     res.json(items);
   } catch (error) {
-    console.error('Error fetching item:', error);
-    res.status(500).json({ error: 'Failed to fetch product'});
+    console.error("Error fetching item:", error);
+    res.status(500).json({ error: "Failed to fetch product" });
   }
 });
 
+// GET /api/auth/me route
+app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
+  try {
+    res.send(req.user);
+  } catch (ex) {
+    next(ex);
+  }
+});
 // POST/api/auth/login route
 
 app.post("/api/auth/login", async (req, res, next) => {

@@ -47,7 +47,13 @@ const init = async () => {
   console.log(`curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`);
   console.log(`curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`);
   console.log(`curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
-  
+  console.log(`curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`);
+
+  // TODO:
+  // Add CURL command for GET items/itemid/reviews
+  // ADD CURL command for GET items/itemid/reviews/reviewid
+  // ADD CURL command for GET reviews/me
+
   app.listen(port, () => console.log(`listening on PORT ${port}`));
 };
 

@@ -209,7 +209,7 @@ app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
 
 //GET review for item by review id 
 
-app.get('/api/items/:itemId/reviews/:reviewId', isLoggedIn, async (req, res, next) => {
+app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
   const { itemId, reviewId } = req.params;
   try {
     const review = await findReviewById(itemId, reviewId); 

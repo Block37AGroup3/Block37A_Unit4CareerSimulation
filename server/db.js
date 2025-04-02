@@ -9,6 +9,7 @@ const JWT = process.env.JWT || "shhh";
 
 //create tables
 const createTables = async () => {
+  console.log("Creating tables...");
   // Hopefully the right order to prevent foreign key issue
   const SQL = /*sql*/ `
   DROP TABLE IF EXISTS comments;
@@ -48,6 +49,7 @@ const createTables = async () => {
     updated_at TIMESTAMP DEFAULT now()
     );
       `;
+  console.log("Tables created.");
   await client.query(SQL);
 };
 
@@ -71,6 +73,7 @@ const createUser = async ({ username, password_hash }) => {
   const response = await client.query(SQL, [uuid.v4(), username, await bcrypt.hash(password_hash, 5)]);
   return response.rows[0];
 };
+
 const createItem = async ({ name, description, average_rating }) => {
   const SQL = /*sql*/ `
     INSERT INTO items (id, name, description, average_rating)
@@ -80,6 +83,7 @@ const createItem = async ({ name, description, average_rating }) => {
   const response = await client.query(SQL, [uuid.v4(), name, description, average_rating]);
   return response.rows[0];
 };
+
 const createReview = async ({ user_id, item_id, rating, review_text }) => {
   const SQL = /*sql*/ `
     INSERT INTO reviews (id, user_id, item_id, rating, review_text)
@@ -89,6 +93,7 @@ const createReview = async ({ user_id, item_id, rating, review_text }) => {
   const response = await client.query(SQL, [uuid.v4(), user_id, item_id, rating, review_text]);
   return response.rows[0];
 };
+
 const createComment = async ({ review_id, user_id, comment_text }) => {
   const SQL = /*sql*/ `
     INSERT INTO comments (id, review_id, user_id, comment_text)

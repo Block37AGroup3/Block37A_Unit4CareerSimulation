@@ -12,6 +12,8 @@ const {
   findUserByToken
 } = require("./db.js");
 
+const { seedData } = require("./seed.js");
+
 const express = require("express");
 const app = express();
 const port = 3000;
@@ -36,63 +38,16 @@ const isLoggedIn = async (req, res, next) => {
 const init = async () => {
   await connectDB();
   await createTables();
-  console.log("Tables created.");
+  await seedData();
 
-  const [moe, lucy, larry, ethyl] = await Promise.all([
-    createUser({ username: "moe", password_hash: "moe_pw" }),
-    createUser({ username: "lucy", password_hash: "lucy_pw" }),
-    createUser({ username: "larry", password_hash: "larry_pw" }),
-    createUser({ username: "ethyl", password_hash: "ethyl_pw" }),
-  ]);
-  console.log("Users created:", { moe, lucy, larry, ethyl });
-
-  const [widget, gadget] = await Promise.all([
-    createItem({
-      name: "Widget",
-      description: "A useful widget",
-      average_rating: 0.0,
-    }),
-    createItem({
-      name: "Gadget",
-      description: "A fancy gadget",
-      average_rating: 0.0,
-    }),
-  ]);
-  console.log("Items created:", { widget, gadget });
-
-  const [review1, review2] = await Promise.all([
-    createReview({
-      user_id: moe.id,
-      item_id: widget.id,
-      rating: 4,
-      review_text: "Great widget, highly recommend!",
-    }),
-    createReview({
-      user_id: lucy.id,
-      item_id: gadget.id,
-      rating: 5,
-      review_text: "This gadget changed my life!",
-    }),
-  ]);
-  console.log("Reviews created:", { review1, review2 });
-
-  const [comment1, comment2] = await Promise.all([
-    createComment({
-      review_id: review1.id,
-      user_id: larry.id,
-      comment_text: "I agree with this review!",
-    }),
-    createComment({
-      review_id: review2.id,
-      user_id: ethyl.id,
-      comment_text: "Thanks for the recommendation!",
-    }),
-  ]);
-  console.log("Comments created:", { comment1, comment2 });
-
-  const items = await fetchItems();
-  console.log("Items: ", items);
-
+  console.log("----------");
+  console.log("Helpful CURL commands to test:");
+  console.log(`curl -X GET http://localhost:${port}/api/items`);
+  console.log(`curl -X GET http://localhost:${port}/api/items/[ITEM_ID]`);
+  console.log(`curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`);
+  console.log(`curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`);
+  console.log(`curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
+  
   app.listen(port, () => console.log(`listening on PORT ${port}`));
 };
 

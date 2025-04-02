@@ -120,30 +120,6 @@ const authenticateUser = async ({ username, password_hash }) => {
   return { token };
 };
 
-const findUserByToken = async (token) => {
-  let id;
-  try {
-    const payload = await jwt.verify(token, JWT);
-    id = payload.id;
-  } catch (ex) {
-    const error = Error("not authorized");
-    error.status = 401;
-    throw error;
-  }
-  const SQL = `
-    SELECT id, username
-    FROM users
-    WHERE id = $1
-  `;
-  const response = await client.query(SQL, [id]);
-  if (!response.rows.length) {
-    const error = Error("not authorized");
-    error.status = 401;
-    throw error;
-  }
-  return response.rows[0];
-};
-
 // Fetch items method
 const fetchItems = async () => {
   const SQL = `SELECT * FROM items;`;

@@ -190,7 +190,10 @@ app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, nex
       return res.status(403).json({ error: "You are not authorized to update this review." });
     }
     const SQL = /*sql*/ `
-      UPDATE reviews SET rating = $1, review_text = $2, updated_at = NOW()`;
+      UPDATE reviews SET rating = $1, review_text = $2, updated_at = NOW()
+      WHERE id = $3, user_id = $4
+      RETURNING *;
+      `;
   } catch (error) {}
 });
 

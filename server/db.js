@@ -153,6 +153,29 @@ const findUserByToken = async (token) => {
   }
 };
 
+//GET review by itemId and reviewId
+
+const findReviewById = async (itemId, reviewId) => {
+  try {
+    const SQL = `
+    SELECT reviews.id AS review_id, reviews.review_text, reviews.rating, reviews.created_at, users.username
+    FROM reviews
+    JOIN users ON reviews.user_id = users.id
+    WHERE reviews.item_id = $1 AND reviews.id = $2;
+    `;
+
+    const response = await client.query(SQL, [itemId, reviewId]);
+
+    if (response.rowCount.length === 0) {
+      return null;
+    }
+    return response.rows[0];
+  } catch (error) {
+    console.error("Error finding review:", error);
+    throw new Error("Database error");
+  }
+};
+
 module.exports = {
   client,
   connectDB,
@@ -165,4 +188,5 @@ module.exports = {
   fetchItemId,
   authenticateUser,
   findUserByToken,
+  findReviewById
 };

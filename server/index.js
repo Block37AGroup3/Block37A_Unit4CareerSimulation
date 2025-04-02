@@ -18,7 +18,7 @@ app.use(express.json());
 
 const isLoggedIn = async (req, res, next) => {
   try {
-    req.user = await findUserByToken(req.headers.authorizationUser);
+    req.user = await findUserByToken(req.headers.authorization);
     next();
   } catch (ex) {
     next(ex);

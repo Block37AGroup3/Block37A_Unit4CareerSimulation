@@ -194,7 +194,16 @@ app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, nex
       WHERE id = $3, user_id = $4
       RETURNING *;
       `;
-  } catch (error) {}
+    const response = await client.query(SQL, [rating, review_text, reviewId, userId]);
+    // this checks that the review exists. it can also be written as response.rows.length === 0
+    if (!response.rows.length) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+    res.status(200).json(response.rows[0]);
+  } catch (error) {
+    console.error("Error updating review:", error);
+    res.status(500).json({ error: "Failed to update review" });
+  }
 });
 
 init();

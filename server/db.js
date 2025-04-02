@@ -166,7 +166,7 @@ const findReviewById = async (itemId, reviewId) => {
 
     const response = await client.query(SQL, [itemId, reviewId]);
 
-    if (response.rowCount.length === 0) {
+    if (response.rowCount === 0) {
       return null;
     }
     return response.rows[0];

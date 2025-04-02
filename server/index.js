@@ -212,10 +212,15 @@ app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
 app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
   const { itemId, reviewId } = req.params;
   try {
-    const review = await findReviewById(itemId, reviewId); 
+    const item = await fetchItemId(itemId); 
+
+  if (item.length === 0) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+
+  const review = await findReviewById(itemId, reviewId);
 
   if (review) {
-
     res.json({
       item_id: itemId,
       review_id: review.review_id,

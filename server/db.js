@@ -133,7 +133,7 @@ const fetchItems = async () => {
 };
 
 // Fetch itemId method
-const fetchItemId = async(id) => {
+const fetchItemId = async (id) => {
   const SQL = `SELECT * FROM items WHERE id = $1;`;
   const response = await client.query(SQL, [id]);
   return response.rows;

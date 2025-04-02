@@ -191,7 +191,7 @@ app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, nex
     }
     const SQL = /*sql*/ `
       UPDATE reviews SET rating = $1, review_text = $2, updated_at = NOW()
-      WHERE id = $3, user_id = $4
+      WHERE id = $3 AND user_id = $4
       RETURNING *;
       `;
     const response = await client.query(SQL, [rating, review_text, reviewId, userId]);

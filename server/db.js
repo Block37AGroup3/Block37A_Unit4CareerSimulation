@@ -7,9 +7,12 @@ const client = new pg.Client(
 );
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const JWT = process.env.JWT || "shhh";
 
 //create tables
 const createTables = async () => {
+  console.log("Creating tables...");
   // Hopefully the right order to prevent foreign key issue
   const SQL = /*sql*/ `
   DROP TABLE IF EXISTS comments;
@@ -49,6 +52,7 @@ const createTables = async () => {
     updated_at TIMESTAMP DEFAULT now()
     );
       `;
+  console.log("Tables created.");
   await client.query(SQL);
 };
 
@@ -76,6 +80,7 @@ const createUser = async ({ username, password_hash }) => {
   ]);
   return response.rows[0];
 };
+
 const createItem = async ({ name, description, average_rating }) => {
   const SQL = /*sql*/ `
     INSERT INTO items (id, name, description, average_rating)
@@ -90,6 +95,7 @@ const createItem = async ({ name, description, average_rating }) => {
   ]);
   return response.rows[0];
 };
+
 const createReview = async ({ user_id, item_id, rating, review_text }) => {
   const SQL = /*sql*/ `
     INSERT INTO reviews (id, user_id, item_id, rating, review_text)
@@ -105,6 +111,7 @@ const createReview = async ({ user_id, item_id, rating, review_text }) => {
   ]);
   return response.rows[0];
 };
+
 const createComment = async ({ review_id, user_id, comment_text }) => {
   const SQL = /*sql*/ `
     INSERT INTO comments (id, review_id, user_id, comment_text)
@@ -120,12 +127,33 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
   return response.rows[0];
 };
 
+// authentication
+const authenticateUser = async ({ username, password_hash }) => {
+  console.log("Authenticating user function...", username);
+  const SQL = /*sql*/ `
+    SELECT id, password_hash 
+    FROM users 
+    WHERE username = $1;
+  `;
+  const response = await client.query(SQL, [username]);
+  if (!response.rows.length || (await bcrypt.compare(password_hash, response.rows[0].password_hash)) === false) {
+    console.error("Invalid username or password");
+    const error = Error("not authorized");
+    error.status = 401;
+    throw error;
+  }
+
+  const token = jwt.sign({ id: response.rows[0].id }, process.env.JWT, { algorithm: "HS256" });
+  console.log("Generated Token:", token);
+  return { token };
+};
+
 // Fetch items method
 const fetchItems = async () => {
   const SQL = `SELECT * FROM items;`;
   const response = await client.query(SQL);
   return response.rows;
-};
+}
 
 module.exports = {
   client,
@@ -135,29 +163,5 @@ module.exports = {
   createItem,
   createReview,
   createComment,
-  fetchItems,
-};
-
-const fetchReviewsByItemId = async (item_id) => {
-  const SQL = /*sql*/ `
-    SELECT * FROM reviews
-    WHERE item_id = $1;
-  `;
-  const response = await client.query(SQL, [item_id]);
-  if (response.rows.length === 0) {
-    console.log(`No reviews found for item with ID: ${item_id}`);
-  }
-  return response.rows; // If no reviews exist then an empty array will be returned
-};
-
-module.exports = {
-  client,
-  connectDB,
-  createTables,
-  createUser,
-  createItem,
-  createReview,
-  createComment,
-  fetchItems,
-  fetchReviewsByItemId, // Export new function
+  fetchItems
 };

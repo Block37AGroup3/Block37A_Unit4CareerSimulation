@@ -158,4 +158,5 @@ module.exports = {
   createComment,
   fetchItems,
   authenticateUser,
+  findUserByToken,
 };

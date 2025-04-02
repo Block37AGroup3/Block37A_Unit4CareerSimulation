@@ -8,12 +8,22 @@ const {
   createComment,
   fetchItems,
   authenticateUser,
+  findUserByToken,
 } = require("./db.js");
 
 const express = require("express");
 const app = express();
 const port = 3000;
 app.use(express.json());
+
+const isLoggedIn = async (req, res, next) => {
+  try {
+    req.user = await findUserByToken(req.headers.authorizationUser);
+    next();
+  } catch (ex) {
+    next(ex);
+  }
+};
 
 const init = async () => {
   await connectDB();
@@ -85,6 +95,15 @@ app.get("/api/items", async (req, res) => {
     res.json(items);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+// GET /api/auth/me route
+app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
+  try {
+    res.send(req.user);
+  } catch (ex) {
+    next(ex);
   }
 });
 

@@ -154,6 +154,7 @@ module.exports = {
   createReview,
   createComment,
   fetchItems,
+  fetchItemId,
   authenticateUser,
   findUserByToken,
 };

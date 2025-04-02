@@ -120,24 +120,23 @@ app.post("/api/auth/register", async (req, res, next) => {
 });
 
 // GET /api/auth/me route
-app.get('/api/auth/me', isLoggedIn, (req, res, next)=> {
+app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
   try {
     res.send(req.user);
-  }
-  catch(ex){  
+  } catch (ex) {
     next(ex);
   }
 });
 
 // POST /api/items/:itemId/reviews
-app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
+app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   try {
     const { rating, review_text } = req.body;
-    if (typeof rating !== 'number' || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be a number between 1 and 5.' });
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Rating must be a number between 1 and 5." });
     }
-    if (!review_text || typeof review_text !== 'string' || review_text.trim() === '') {
-      return res.status(400).json({ error: 'Review text is required.' });
+    if (!review_text || typeof review_text !== "string" || review_text.trim() === "") {
+      return res.status(400).json({ error: "Review text is required." });
     }
 
     const item = await fetchItemId(req.params.itemId);
@@ -145,10 +144,10 @@ app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    const existingReview = await client.query(
-      'SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2',
-      [req.user.id, req.params.itemId]
-    );
+    const existingReview = await client.query("SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2", [
+      req.user.id,
+      req.params.itemId,
+    ]);
 
     if (existingReview.rows.length > 0) {
       return res.status(409).json({ error: "You have already reviewed this item." });
@@ -158,11 +157,10 @@ app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
       user_id: req.user.id,
       item_id: req.params.itemId,
       rating: req.body.rating,
-      review_text: req.body.review_text
+      review_text: req.body.review_text,
     });
     res.status(201).json(review);
-  }
-  catch(ex){
+  } catch (ex) {
     next(ex);
   }
 });

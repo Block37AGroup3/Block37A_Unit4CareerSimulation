@@ -158,6 +158,8 @@ const findUserByToken = async (token) => {
   }
 };
 
+//GET review by itemId and reviewId
+
 const findReviewById = async (itemId, reviewId) => {
   try {
     const SQL = `
@@ -232,4 +234,4 @@ module.exports = {
   findCommentsByMe, 
   findReviewById, 
   findReviewsByMe
-};
+  }; 

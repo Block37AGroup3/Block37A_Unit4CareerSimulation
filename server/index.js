@@ -1,10 +1,37 @@
-
-const { client, connectDB, createTables, createItem, createUser, createReview, createComment, fetchItems, fetchItemId } = require("./db.js");
+const {
+  client,
+  connectDB,
+  createTables,
+  createItem,
+  createUser,
+  createReview,
+  createComment,
+  fetchItems,
+  fetchItemId,
+  authenticateUser,
+  findUserByToken
+} = require("./db.js");
 
 const express = require("express");
 const app = express();
 const port = 3000;
 app.use(express.json());
+
+const isLoggedIn = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+
+    if (!token) {
+      return res.status(401).json({ error: "Token is required" });
+    }
+
+    req.user = await findUserByToken(token);
+    next();
+  } catch (ex) {
+    console.error("Error in isLoggedIn middleware:", ex);
+    next(ex);
+  }
+};
 
 const init = async () => {
   await connectDB();
@@ -78,23 +105,32 @@ app.get("/api/items", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
+
 // GET items by id
-app.get('/api/items/:itemId', async (req, res) => {
+app.get("/api/items/:itemId", async (req, res) => {
   try {
     const itemId = req.params.itemId;
     const items = await fetchItemId(itemId);
     if (items.length === 0) {
-      return res.status(404).json({ error: 'Item not found'});
+      return res.status(404).json({ error: "Item not found" });
     }
     res.json(items);
   } catch (error) {
-    console.error('Error fetching item:', error);
-    res.status(500).json({ error: 'Failed to fetch product'});
+    console.error("Error fetching item:", error);
+    res.status(500).json({ error: "Failed to fetch product" });
+  }
+});
+
+// GET /api/auth/me route
+app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
+  try {
+    res.send(req.user);
+  } catch (ex) {
+    next(ex);
   }
 });
 
 // POST/api/auth/login route
-
 app.post("/api/auth/login", async (req, res, next) => {
   try {
     res.send(await authenticateUser(req.body));
@@ -119,6 +155,54 @@ app.post("/api/auth/register", async (req, res, next) => {
     } else {
       next(error);
     }
+  }
+});
+
+// GET /api/auth/me route
+app.get('/api/auth/me', isLoggedIn, (req, res, next)=> {
+  try {
+    res.send(req.user);
+  }
+  catch(ex){  
+    next(ex);
+  }
+});
+
+// POST /api/items/:itemId/reviews
+app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next)=> {
+  try {
+    const { rating, review_text } = req.body;
+    if (typeof rating !== 'number' || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be a number between 1 and 5.' });
+    }
+    if (!review_text || typeof review_text !== 'string' || review_text.trim() === '') {
+      return res.status(400).json({ error: 'Review text is required.' });
+    }
+
+    const item = await fetchItemId(req.params.itemId);
+    if (item.length === 0) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+
+    const existingReview = await client.query(
+      'SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2',
+      [req.user.id, req.params.itemId]
+    );
+
+    if (existingReview.rows.length > 0) {
+      return res.status(409).json({ error: "You have already reviewed this item." });
+    }
+
+    const review = await createReview({
+      user_id: req.user.id,
+      item_id: req.params.itemId,
+      rating: req.body.rating,
+      review_text: req.body.review_text
+    });
+    res.status(201).json(review);
+  }
+  catch(ex){
+    next(ex);
   }
 });
 

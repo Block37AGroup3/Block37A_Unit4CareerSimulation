@@ -101,7 +101,7 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
 
 // authentication
 const authenticateUser = async ({ username, password_hash }) => {
-  console.log("Authenticating user fucntion...", username);
+  console.log("Authenticating user function...", username);
   const SQL = /*sql*/ `
     SELECT id, password_hash 
     FROM users 
@@ -109,11 +109,14 @@ const authenticateUser = async ({ username, password_hash }) => {
   `;
   const response = await client.query(SQL, [username]);
   if (!response.rows.length || (await bcrypt.compare(password_hash, response.rows[0].password_hash)) === false) {
+    console.error("Invalid username or password");
     const error = Error("not authorized");
     error.status = 401;
     throw error;
   }
-  const token = await jwt.sign({ id: response.rows[0].id }, JWT);
+
+  const token = jwt.sign({ id: response.rows[0].id }, process.env.JWT, { algorithm: "HS256" });
+  console.log("Generated Token:", token);
   return { token };
 };
 
@@ -122,16 +125,33 @@ const fetchItems = async () => {
   const SQL = `SELECT * FROM items;`;
   const response = await client.query(SQL);
   return response.rows;
-}; 
+};
 
 // Fetch itemId method
-
 const fetchItemId = async(id) => {
   const SQL = `SELECT * FROM items WHERE id = $1;`;
-  const response = await client.query(SQL);
+  const response = await client.query(SQL, [id]);
   return response.rows;
 };
 
+const findUserByToken = async (token) => {
+  try {
+    console.log("Received token:", token);
+    const payload = jwt.verify(token, process.env.JWT);
+    console.log("Decoded payload:", payload);
+
+    const SQL = `SELECT * FROM users WHERE id = $1;`;
+    const response = await client.query(SQL, [payload.id]);
+
+    if (!response.rows.length) {
+      throw new Error("User not found");
+    }
+    return response.rows[0];
+  } catch (ex) {
+    console.error("Error decoding token:", ex.message);
+    throw new Error("Not authorized");
+  }
+};
 
 module.exports = {
   client,
@@ -144,4 +164,5 @@ module.exports = {
   fetchItems,
   fetchItemId,
   authenticateUser,
+  findUserByToken,
 };

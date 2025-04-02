@@ -10,7 +10,8 @@ const {
   fetchItemId,
   authenticateUser,
   findUserByToken,
-  findReviewsByMe
+  findReviewsByMe, 
+  findCommentsByMe
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -182,6 +183,24 @@ app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch reviews" });
   }
 });
+
+//GET /api/comments/me route
+
+app.get('/api/comments/me', isLoggedIn, async (req, res) => {
+  try {
+    const comments = await findCommentsByMe(req.user.id);
+   
+    if (comments.length > 0) {
+      res.json(comments);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    console.error("Error fetching user comments:", error);
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+
 
 
 init();

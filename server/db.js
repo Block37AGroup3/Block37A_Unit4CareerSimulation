@@ -176,6 +176,25 @@ const findReviewsByMe = async (userId) => {
   }
 };
 
+const findCommentsByMe = async (userId) => {
+  try {
+    const SQL = `
+      SELECT comments.id AS comment_id, comments.comment_text, comments.created_at, items.name AS item_name
+      FROM comments
+      JOIN reviews ON comments.review_id = reviews.id
+      JOIN items ON reviews.item_id = items.id
+      WHERE comments.user_id = $1;
+    `;
+
+    const response = await client.query(SQL, [userId]);
+
+    return response.rows;
+  } catch (error) {
+    console.error("Error fetching comments for user:", error);
+    throw new Error("Database error");
+  }
+};
+
 module.exports = {
   client,
   connectDB,
@@ -188,5 +207,6 @@ module.exports = {
   fetchItemId,
   authenticateUser,
   findUserByToken,
-  findReviewsByMe
+  findReviewsByMe,
+  findCommentsByMe
 };

@@ -119,6 +119,12 @@ app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
 // POST/api/auth/login route
 app.post("/api/auth/login", async (req, res, next) => {
   try {
+    const {username, password} = req.body;
+    
+    if (!username || !password) {
+      res.status(400).json({error: "Username and/or password are required."});
+    }
+
     res.send(await authenticateUser(req.body));
   } catch (ex) {
     next(ex);
@@ -141,15 +147,6 @@ app.post("/api/auth/register", async (req, res, next) => {
     } else {
       next(error);
     }
-  }
-});
-
-// GET /api/auth/me route
-app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
-  try {
-    res.send(req.user);
-  } catch (ex) {
-    next(ex);
   }
 });
 

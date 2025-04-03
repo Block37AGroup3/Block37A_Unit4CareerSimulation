@@ -14,6 +14,8 @@ const {
   findReviewsByMe, 
   findCommentsByMe,
   getReviewsByItemId,
+  findCommentById,
+  deleteCommentById
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");

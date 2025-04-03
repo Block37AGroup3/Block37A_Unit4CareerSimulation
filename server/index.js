@@ -189,6 +189,41 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   }
 });
 
+//Define PUT /api/users/:userId/reviews/:reviewId route
+
+app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, next) => {
+  try {
+    const { rating, review_text } = req.body;
+    const { userId, reviewId } = req.params;
+    // pulled from the post review request for error handling we need to check the same things.
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Rating must be a number between 1 and 5." });
+    }
+    // pulled from the post review request for error handling we need to check the same things.
+    if (!review_text || typeof review_text !== "string" || review_text.trim() === "") {
+      return res.status(400).json({ error: "Review text is required." });
+    }
+    // this checks that the user is logged in.
+    if (userId !== req.user.id) {
+      return res.status(403).json({ error: "You are not authorized to update this review." });
+    }
+    const SQL = /*sql*/ `
+      UPDATE reviews SET rating = $1, review_text = $2, updated_at = NOW()
+      WHERE id = $3 AND user_id = $4
+      RETURNING *;
+      `;
+    const response = await client.query(SQL, [rating, review_text, reviewId, userId]);
+    // this checks that the review exists. it can also be written as response.rows.length === 0
+    if (!response.rows.length) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+    res.status(200).json(response.rows[0]);
+  } catch (error) {
+    console.error("Error updating review:", error);
+    res.status(500).json({ error: "Failed to update review" });
+  }
+});
+
 //GET review for item by review id 
 
 app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {

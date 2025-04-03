@@ -14,6 +14,8 @@ const {
   findReviewsByMe, 
   findCommentsByMe,
   getReviewsByItemId,
+  findCommentById,
+  deleteCommentById
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -267,6 +269,35 @@ app.get("/api/items/:itemId/reviews", async (req, res) => {
   } catch (error) {
     console.error("Error fetching reviews:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// DELETE /api/users/:userId/comments/:commentId route
+
+app.delete("/api/users/:userId/comments/:commentId", isLoggedIn, async (req, res, next) => {
+  const { userId, commentId } = req.params;
+
+  try {
+    const comment = await findCommentById(commentId);
+
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    if (comment.user_id !== req.user.id) {
+      return res.status(403).json({ error: "You are not authorized to delete this comment" });
+    }
+
+    const deletedComment = await deleteCommentById(commentId);
+
+    if (!deletedComment) {
+      return res.status(500).json({ error: "Failed to delete comment" });
+    }
+
+    res.status(200).json({ message: "Comment deleted "});
+  } catch (error) {
+    console.error("Error deleting comment", error);
+    next(error);
   }
 });
 

@@ -64,11 +64,14 @@ const init = async () => {
   console.log(
     `curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`
   );
-
+  console.log(`curl -X DELETE http://localhost:${port}/api/users/[USER_ID]/reviews/[REVIEW_ID] -H "Authorization: Bearer [PUT_TOKEN_HERE]"`);
+  console.log(`curl -X GET http://localhost:${port}/api/items/ITEM_ID/reviews`);
+  console.log(`curl -X GET http://localhost:${port}/api/items/ITEM_ID/reviews/REVIEW_ID`);
+  console.log(`curl -X GET http://localhost:3000/api/reviews/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
+  console.log(`curl -X GET http://localhost:3000/api/comments/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
+  console.log("----------");
+  
   // TODO:
-  // Add CURL command for GET items/itemid/reviews
-  // ADD CURL command for GET items/itemid/reviews/reviewid
-  // ADD CURL command for GET reviews/me
 
   app.listen(port, () => console.log(`listening on PORT ${port}`));
 };

@@ -273,19 +273,19 @@ app.get("/api/items/:itemId/reviews", async (req, res) => {
 });
 
 // DELETE /api/users/:userId/reviews/:reviewId route
-app.delete('/api/reviews/:reviewId', isLoggedIn, async (req, res) => {
+app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) => {
   try {
-    const { reviewId } = req.params;
+    const { userId, reviewId } = req.params;
 
     // Fetch the review by reviewId
-    const review = await fetchIndividualReviewByReviewId(reviewId);
+    const review = await fetchIndividualReviewByReviewId(userId, reviewId);
     console.log(`review: `, review);
     if (!review) {
       return res.status(404).json({ message: 'Review not found' });
     }
 
     // Ensure the review belongs to the logged-in user
-    if (review.user_id !== req.user.id) {
+    if (userId !== req.user.id) {
       return res.status(403).json({ message: 'Forbidden: You cannot delete this review' });
     }
 

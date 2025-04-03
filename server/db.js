@@ -168,15 +168,15 @@ const fetchItems = async () => {
 };
 
 // Fetch individual review by review id method
-const fetchIndividualReviewByReviewId = async (reviewId) => {
+const fetchIndividualReviewByReviewId = async ( userId, reviewId ) => {
   try {
-    const result = await client.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
+    const result = await client.query('SELECT * FROM reviews WHERE user_id = $1 AND id = $2;', [userId, reviewId]);
 
     if (result.rows.length === 0) {
       return null;
     }
 
-    return result.rows[0];
+    return result.rows;
   } catch (error) {
     console.error('Error fetching review:', error);
     return null;
@@ -193,7 +193,7 @@ const fetchItemId = async (id) => {
 // Destroy reviewId method
 const destroyReviewId = async (userId, reviewId) => {
   try {
-      const SQL = `DELETE FROM reviews WHERE user_id = $1 AND id = $2 RETURNING *;`;
+      const SQL = `DELETE FROM reviews WHERE user_id = $1 AND id = $2;`;
       const result = await client.query(SQL, [userId, reviewId]);
       return result.rowCount > 0;
   } catch (error) {

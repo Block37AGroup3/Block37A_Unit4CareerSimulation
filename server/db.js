@@ -70,7 +70,11 @@ const createUser = async ({ username, password_hash }) => {
     VALUES ($1, $2, $3)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), username, await bcrypt.hash(password_hash, 5)]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    username,
+    await bcrypt.hash(password_hash, 5),
+  ]);
   return response.rows[0];
 };
 
@@ -80,7 +84,12 @@ const createItem = async ({ name, description, average_rating }) => {
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), name, description, average_rating]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    name,
+    description,
+    average_rating,
+  ]);
   return response.rows[0];
 };
 
@@ -90,7 +99,13 @@ const createReview = async ({ user_id, item_id, rating, review_text }) => {
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), user_id, item_id, rating, review_text]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    user_id,
+    item_id,
+    rating,
+    review_text,
+  ]);
   return response.rows[0];
 };
 
@@ -100,8 +115,22 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), review_id, user_id, comment_text]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    review_id,
+    user_id,
+    comment_text,
+  ]);
   return response.rows[0];
+};
+
+const getReviewsByItemId = async (item_id) => {
+  const SQL = /*sql*/ `
+    SELECT * FROM items
+    WHERE id = $1;
+  `;
+  const response = await client.query(SQL, [item_id]);
+  return response.rows;
 };
 
 // authentication
@@ -113,14 +142,20 @@ const authenticateUser = async ({ username, password_hash }) => {
     WHERE username = $1;
   `;
   const response = await client.query(SQL, [username]);
-  if (!response.rows.length || (await bcrypt.compare(password_hash, response.rows[0].password_hash)) === false) {
+  if (
+    !response.rows.length ||
+    (await bcrypt.compare(password_hash, response.rows[0].password_hash)) ===
+      false
+  ) {
     console.error("Invalid username or password");
     const error = Error("not authorized");
     error.status = 401;
     throw error;
   }
 
-  const token = jwt.sign({ id: response.rows[0].id }, process.env.JWT, { algorithm: "HS256" });
+  const token = jwt.sign({ id: response.rows[0].id }, process.env.JWT, {
+    algorithm: "HS256",
+  });
   console.log("Generated Token:", token);
   return { token };
 };
@@ -133,7 +168,7 @@ const fetchItems = async () => {
 };
 
 // Fetch itemId method
-const fetchItemId = async(id) => {
+const fetchItemId = async (id) => {
   const SQL = `SELECT * FROM items WHERE id = $1;`;
   const response = await client.query(SQL, [id]);
   return response.rows;
@@ -143,7 +178,7 @@ const fetchItemId = async(id) => {
 const destroyReviewId = async (userId, reviewId) => {
   try {
     const SQL = `DELETE FROM reviews WHERE user_id = $1 AND id = $2 RETURNING *;`;
-    const result = await pool.query(SQL,[userId, reviewId]);
+    const result = await client.query(SQL,[userId, reviewId]);
     return result.rowCount > 0;
   } catch (error) {
     console.error('Error deleting review:', error);
@@ -154,6 +189,7 @@ const destroyReviewId = async (userId, reviewId) => {
 const findUserByToken = async (token) => {
   try {
     console.log("Received token:", token);
+
     const payload = jwt.verify(token, process.env.JWT);
     console.log("Decoded payload:", payload);
 
@@ -161,14 +197,38 @@ const findUserByToken = async (token) => {
     const response = await client.query(SQL, [payload.id]);
 
     if (!response.rows.length) {
+      console.error("User not found in database for ID:", payload.id);
       throw new Error("User not found");
     }
+
     return response.rows[0];
   } catch (ex) {
-    console.error("Error decoding token:", ex.message);
+    console.error("Error decoding token or finding user:", ex.message);
     throw new Error("Not authorized");
   }
 };
+
+//GET review by itemId and reviewId
+const findReviewById = async (itemId, reviewId) => {
+  try {
+    const SQL = `
+    SELECT reviews.id AS review_id, reviews.review_text, reviews.rating, reviews.created_at, users.username
+    FROM reviews
+    JOIN users ON reviews.user_id = users.id
+    WHERE reviews.item_id = $1 AND reviews.id = $2;
+    `;
+
+    const response = await client.query(SQL, [itemId, reviewId]);
+
+    if (response.rowCount === 0) {
+      return null;
+    }
+    return response.rows[0];
+  } catch (error) {
+    console.error("Error finding review:", error);
+    throw new Error("Database error");
+  }
+};   
 
 const findReviewsByMe = async (userId) => {
   try {
@@ -188,6 +248,25 @@ const findReviewsByMe = async (userId) => {
   }
 };
 
+const findCommentsByMe = async (userId) => {
+  try {
+    const SQL = `
+      SELECT comments.id AS comment_id, comments.comment_text, comments.created_at, items.name AS item_name
+      FROM comments
+      JOIN reviews ON comments.review_id = reviews.id
+      JOIN items ON reviews.item_id = items.id
+      WHERE comments.user_id = $1;
+    `;
+
+    const response = await client.query(SQL, [userId]);
+
+    return response.rows;
+  } catch (error) {
+    console.error("Error fetching comments for user:", error);
+    throw new Error("Database error");
+  }
+};
+
 module.exports = {
   client,
   connectDB,
@@ -196,10 +275,13 @@ module.exports = {
   createItem,
   createReview,
   createComment,
-  fetchItems,
-  fetchItemId,
   authenticateUser,
   findUserByToken,
+  findCommentsByMe, 
+  findReviewById, 
   findReviewsByMe,
+  fetchItems,
+  fetchItemId,
+  getReviewsByItemId,
   destroyReviewId
 };

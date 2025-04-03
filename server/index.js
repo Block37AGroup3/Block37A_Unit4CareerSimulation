@@ -10,8 +10,10 @@ const {
   fetchItemId,
   authenticateUser,
   findUserByToken,
-  findReviewsByMe,
-  findUserByToken,
+  findReviewById,
+  findReviewsByMe, 
+  findCommentsByMe,
+  getReviewsByItemId,
   destroyReviewId
 } = require("./db.js");
 
@@ -24,17 +26,17 @@ app.use(express.json());
 
 const isLoggedIn = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.replace("Bearer ", "");
-
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ error: "Token is required" });
+      console.error("No token provided in request headers");
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
-
     req.user = await findUserByToken(token);
+    console.log("User authenticated:", req.user);
     next();
-  } catch (ex) {
-    console.error("Error in isLoggedIn middleware:", ex);
-    next(ex);
+  } catch (error) {
+    console.error("Error in isLoggedIn middleware:", error.message);
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };
 
@@ -47,10 +49,18 @@ const init = async () => {
   console.log("Helpful CURL commands to test:");
   console.log(`curl -X GET http://localhost:${port}/api/items`);
   console.log(`curl -X GET http://localhost:${port}/api/items/[ITEM_ID]`);
-  console.log(`curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`);
-  console.log(`curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`);
-  console.log(`curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
-  console.log(`curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`);
+  console.log(
+    `curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`
+  );
+  console.log(
+    `curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`
+  );
+  console.log(
+    `curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`
+  );
+  console.log(
+    `curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`
+  );
 
   // TODO:
   // Add CURL command for GET items/itemid/reviews
@@ -108,7 +118,9 @@ app.post("/api/auth/register", async (req, res, next) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required" });
+      return res
+        .status(400)
+        .json({ error: "Username and password are required" });
     }
     const newUser = await createUser({ username, password_hash: password });
     res.status(201).json(newUser);
@@ -136,9 +148,15 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   try {
     const { rating, review_text } = req.body;
     if (typeof rating !== "number" || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: "Rating must be a number between 1 and 5." });
+      return res
+        .status(400)
+        .json({ error: "Rating must be a number between 1 and 5." });
     }
-    if (!review_text || typeof review_text !== "string" || review_text.trim() === "") {
+    if (
+      !review_text ||
+      typeof review_text !== "string" ||
+      review_text.trim() === ""
+    ) {
       return res.status(400).json({ error: "Review text is required." });
     }
 
@@ -147,13 +165,15 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    const existingReview = await client.query("SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2", [
-      req.user.id,
-      req.params.itemId,
-    ]);
+    const existingReview = await client.query(
+      "SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2",
+      [req.user.id, req.params.itemId]
+    );
 
     if (existingReview.rows.length > 0) {
-      return res.status(409).json({ error: "You have already reviewed this item." });
+      return res
+        .status(409)
+        .json({ error: "You have already reviewed this item." });
     }
 
     const review = await createReview({
@@ -168,11 +188,42 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   }
 });
 
+//GET review for item by review id 
+
+app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
+  const { itemId, reviewId } = req.params;
+  try {
+    const item = await fetchItemId(itemId); 
+
+  if (item.length === 0) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+
+  const review = await findReviewById(itemId, reviewId);
+
+  if (review) {
+    res.json({
+      item_id: itemId,
+      review_id: review.review_id,
+      review_text: review.review_text, 
+      rating: review.rating,
+      username: review.username,
+      created_at: review.created_at
+    });
+  } else {
+    res.status(404).json({ error: 'Review not found' });
+  }
+} catch (error) {
+  console.error("Error fetching review:", error);
+  res.status(500).json({ error: "Server error" });
+}
+});
+
 //GET /api/reviews/me route
-app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
+app.get("/api/reviews/me", isLoggedIn, async (req, res) => {
   try {
     const reviews = await findReviewsByMe(req.user.id);
-   
+
     if (reviews.length > 0) {
       res.json(reviews);
     } else {
@@ -184,6 +235,42 @@ app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
   }
 });
 
+//GET /api/comments/me route
+app.get('/api/comments/me', isLoggedIn, async (req, res) => {
+  try {
+    const comments = await findCommentsByMe(req.user.id);
+   
+    if (comments.length > 0) {
+      res.json(comments);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    console.error("Error fetching user comments:", error);
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+
+// GET /api/items/:itemId/reviews
+app.get("/api/items/:itemId/reviews", async (req, res) => {
+  try {
+    const { itemId } = req.params;
+
+    const reviews = await getReviewsByItemId(itemId);
+
+    if (!reviews.length) {
+      return res
+        .status(404)
+        .json({ message: "No reviews found for this item" });
+    }
+
+    return res.status(200).json(reviews);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // DELETE /api/users/:userId/reviews/:reviewId route
 app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) => {
   try {
@@ -192,8 +279,8 @@ app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) 
       return res.status(401).json({ message: 'Unauthorized: Please log in' });
     }
 
-    // Checking if the review exists - WAITING ON SOMEONE ELSE HERE
-    const review = await getReviewById(reviewId);
+    // Checking if the review exists
+    const review = await findReviewById(reviewId);
     if (!review) {
       return res.status(404).json({ message: 'Review not found' });
     }

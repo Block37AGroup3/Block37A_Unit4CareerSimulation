@@ -368,4 +368,44 @@ app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) 
   }
 });
 
+// POST /api/items/:itemId/reviews/:reviewId/comments route
+app.post("/api/items/:itemId/reviews/:reviewId/comments", isLoggedIn, async (req, res, next) => {
+  try { 
+    const { itemId, reviewId } = req.params;
+    const { user_id, comment_text } = req.body;
+
+    if (!user_id || !comment_text) {
+      return res.status(400).json({ error: "User ID and comment text are required." });
+    }
+
+    // Check if the review exists
+    const reviewExists = await client.query(
+      "SELECT * FROM reviews WHERE id = $1",
+      [reviewId]
+    );
+    if (reviewExists.rows.length === 0) {
+      return res.status(404).json({ error: "Review not found." });
+    }
+
+    // Check if the user has already commented on this review
+    const existingComment = await client.query(
+      "SELECT * FROM comments WHERE review_id = $1 AND user_id = $2",
+      [reviewId, user_id]
+    );
+    if (existingComment.rows.length > 0) {
+      return res.status(400).json({ error: "User has already commented on this review." });
+    }
+
+    const newComment = await createComment({
+      review_id: reviewId,
+      user_id: user_id,
+      comment_text,
+    });
+
+    res.status(201).json(newComment);
+  } catch (error) {
+    next(error);
+  }
+});
+
 init();

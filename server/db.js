@@ -126,8 +126,8 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
 
 const getReviewsByItemId = async (item_id) => {
   const SQL = /*sql*/ `
-    SELECT * FROM items
-    WHERE id = $1;
+    SELECT * FROM reviews
+    WHERE item_id = $1;
   `;
   const response = await client.query(SQL, [item_id]);
   return response.rows;

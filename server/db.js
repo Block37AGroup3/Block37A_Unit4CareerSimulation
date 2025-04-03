@@ -236,7 +236,7 @@ const findReviewById = async (itemId, reviewId) => {
 
     const response = await client.query(SQL, [itemId, reviewId]);
 
-    if (response.rowCount === 0) {
+    if (response.rows.length === 0) {
       return null;
     }
     return response.rows[0];
@@ -283,6 +283,38 @@ const findCommentsByMe = async (userId) => {
   }
 };
 
+// Find comment by ID
+const findCommentById = async (commentId)  => {
+  try {
+    const SQL = `SELECT * FROM comments WHERE id =$1`;
+    const result = await client.query(SQL, [commentId]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+    return result.rows[0]; 
+  } catch (error) {
+    console.error("Error finding comment:", error);
+    throw new Error("Database error");
+  }
+};
+
+// Delete commend by ID
+const deleteCommentById = async (commentId) => {
+  try {
+    const SQL = `DELETE FROM comments WHERE id = $1 RETURNING *`;
+    const result = await client.query(SQL, [commentId]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error deleting comment", error);
+    throw new Error("Database error");
+  }
+};
+
 module.exports = {
   client,
   connectDB,
@@ -299,6 +331,8 @@ module.exports = {
   fetchItems,
   fetchItemId,
   getReviewsByItemId,
+  findCommentById,
+  deleteCommentById,
   fetchIndividualReviewByReviewId,
   destroyReviewId
 };

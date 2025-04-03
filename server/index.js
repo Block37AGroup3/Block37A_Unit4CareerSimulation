@@ -11,7 +11,7 @@ const {
   authenticateUser,
   findUserByToken,
   findReviewById,
-  findReviewsByMe, 
+  findReviewsByMe,
   findCommentsByMe,
   getReviewsByItemId,
   findCommentById,
@@ -57,15 +57,12 @@ const init = async () => {
   console.log(
     `curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`
   );
-  console.log(
-    `curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`
-  );
 
   console.log(`curl -X GET http://localhost:3000/api/items`);
   console.log(`curl -X GET http://localhost:3000/api/items/ITEM_ID`);
   console.log(`curl -X GET http://localhost:3000/api/items/ITEM_ID/reviews`);
   console.log(`curl -X GET http://localhost:3000/api/items/ITEM_ID/reviews/REVIEW_ID`);
-
+  console.log(`curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
   console.log(
     `curl -X POST http://localhost:3000/api/items/ITEM_ID/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`
   );
@@ -133,9 +130,7 @@ app.post("/api/auth/register", async (req, res, next) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      return res
-        .status(400)
-        .json({ error: "Username and password are required" });
+      return res.status(400).json({ error: "Username and password are required" });
     }
     const newUser = await createUser({ username, password_hash: password });
     res.status(201).json(newUser);
@@ -163,15 +158,9 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   try {
     const { rating, review_text } = req.body;
     if (typeof rating !== "number" || rating < 1 || rating > 5) {
-      return res
-        .status(400)
-        .json({ error: "Rating must be a number between 1 and 5." });
+      return res.status(400).json({ error: "Rating must be a number between 1 and 5." });
     }
-    if (
-      !review_text ||
-      typeof review_text !== "string" ||
-      review_text.trim() === ""
-    ) {
+    if (!review_text || typeof review_text !== "string" || review_text.trim() === "") {
       return res.status(400).json({ error: "Review text is required." });
     }
 
@@ -180,15 +169,13 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    const existingReview = await client.query(
-      "SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2",
-      [req.user.id, req.params.itemId]
-    );
+    const existingReview = await client.query("SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2", [
+      req.user.id,
+      req.params.itemId,
+    ]);
 
     if (existingReview.rows.length > 0) {
-      return res
-        .status(409)
-        .json({ error: "You have already reviewed this item." });
+      return res.status(409).json({ error: "You have already reviewed this item." });
     }
 
     const review = await createReview({
@@ -240,13 +227,14 @@ app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, nex
 
 //GET review for item by review id 
 
-app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
+
+app.get("/api/items/:itemId/reviews/:reviewId", async (req, res, next) => {
   const { itemId, reviewId } = req.params;
   try {
-    const item = await fetchItemId(itemId); 
+    const item = await fetchItemId(itemId);
 
     if (item.length === 0) {
-      return res.status(404).json({ error: 'Item not found' });
+      return res.status(404).json({ error: "Item not found" });
     }
 
     const review = await findReviewById(itemId, reviewId);
@@ -255,17 +243,48 @@ app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
       res.json({
         item_id: itemId,
         review_id: review.review_id,
-        review_text: review.review_text, 
+        review_text: review.review_text,
         rating: review.rating,
         username: review.username,
-        created_at: review.created_at
+        created_at: review.created_at,
       });
     } else {
-      res.status(404).json({ error: 'Review not found' });
+      res.status(404).json({ error: "Review not found" });
     }
   } catch (error) {
     console.error("Error fetching review:", error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+// Define PUT /api/users/:userId/comments/:commentId route
+
+app.put("/api/users/:userId/comments/:commentId", isLoggedIn, async (req, res, next) => {
+  try {
+    const { comment_text } = req.body;
+    const { userId, commentId } = req.params;
+
+    // this checks that the user is logged in.
+    if (userId !== req.user.id) {
+      return res.status(403).json({ error: "You are not authorized to update this review." });
+    }
+    if (!comment_text || typeof comment_text !== "string" || comment_text.trim() === "") {
+      return res.status(400).json({ error: "Comment text is required." });
+    }
+    const SQL = /*sql*/ `
+      UPDATE comments SET comment_text = $1, updated_at = NOW()
+      WHERE id = $2 AND user_id = $3
+      RETURNING *;
+      `;
+    const response = await client.query(SQL, [comment_text, commentId, userId]);
+    // this checks that the review exists. it can also be written as response.rows.length === 0
+    if (!response.rows.length) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+    res.status(200).json(response.rows[0]);
+  } catch (error) {
+    console.error("Error updating review:", error);
+    res.status(500).json({ error: "Failed to update review" });
+
   }
 });
 
@@ -286,10 +305,10 @@ app.get("/api/reviews/me", isLoggedIn, async (req, res) => {
 });
 
 //GET /api/comments/me route
-app.get('/api/comments/me', isLoggedIn, async (req, res) => {
+app.get("/api/comments/me", isLoggedIn, async (req, res) => {
   try {
     const comments = await findCommentsByMe(req.user.id);
-   
+
     if (comments.length > 0) {
       res.json(comments);
     } else {
@@ -309,9 +328,7 @@ app.get("/api/items/:itemId/reviews", async (req, res) => {
     const reviews = await getReviewsByItemId(itemId);
 
     if (!reviews.length) {
-      return res
-        .status(404)
-        .json({ message: "No reviews found for this item" });
+      return res.status(404).json({ message: "No reviews found for this item" });
     }
 
     return res.status(200).json(reviews);

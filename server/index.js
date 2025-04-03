@@ -37,6 +37,9 @@ const isLoggedIn = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
     req.user = await findUserByToken(token);
+    if (!req.user) {
+      return res.status(403).json({ error: "Forbidden: Invalid token" });
+    }
     console.log("User authenticated:", req.user);
     next();
   } catch (error) {

@@ -15,7 +15,9 @@ const {
   findCommentsByMe,
   getReviewsByItemId,
   findCommentById,
-  deleteCommentById
+  deleteCommentById,
+  fetchIndividualReviewByReviewId,
+  destroyReviewId
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -27,17 +29,17 @@ app.use(express.json());
 
 const isLoggedIn = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.replace("Bearer ", "");
-
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ error: "Token is required" });
+      console.error("No token provided in request headers");
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
-
     req.user = await findUserByToken(token);
+    console.log("User authenticated:", req.user);
     next();
-  } catch (ex) {
-    console.error("Error in isLoggedIn middleware:", ex);
-    next(ex);
+  } catch (error) {
+    console.error("Error in isLoggedIn middleware:", error.message);
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };
 
@@ -231,28 +233,28 @@ app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
   try {
     const item = await fetchItemId(itemId); 
 
-  if (item.length === 0) {
-    return res.status(404).json({ error: 'Item not found' });
-  }
+    if (item.length === 0) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
 
-  const review = await findReviewById(itemId, reviewId);
+    const review = await findReviewById(itemId, reviewId);
 
-  if (review) {
-    res.json({
-      item_id: itemId,
-      review_id: review.review_id,
-      review_text: review.review_text, 
-      rating: review.rating,
-      username: review.username,
-      created_at: review.created_at
-    });
-  } else {
-    res.status(404).json({ error: 'Review not found' });
+    if (review) {
+      res.json({
+        item_id: itemId,
+        review_id: review.review_id,
+        review_text: review.review_text, 
+        rating: review.rating,
+        username: review.username,
+        created_at: review.created_at
+      });
+    } else {
+      res.status(404).json({ error: 'Review not found' });
+    }
+  } catch (error) {
+    console.error("Error fetching review:", error);
+    res.status(500).json({ error: "Server error" });
   }
-} catch (error) {
-  console.error("Error fetching review:", error);
-  res.status(500).json({ error: "Server error" });
-}
 });
 
 //GET /api/reviews/me route
@@ -308,7 +310,6 @@ app.get("/api/items/:itemId/reviews", async (req, res) => {
 });
 
 // DELETE /api/users/:userId/comments/:commentId route
-
 app.delete("/api/users/:userId/comments/:commentId", isLoggedIn, async (req, res, next) => {
   const { userId, commentId } = req.params;
 
@@ -333,6 +334,37 @@ app.delete("/api/users/:userId/comments/:commentId", isLoggedIn, async (req, res
   } catch (error) {
     console.error("Error deleting comment", error);
     next(error);
+  }
+});
+
+// DELETE /api/users/:userId/reviews/:reviewId route
+app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) => {
+  try {
+    const { userId, reviewId } = req.params;
+
+    // Fetch the review by reviewId
+    const review = await fetchIndividualReviewByReviewId(userId, reviewId);
+    console.log(`review: `, review);
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+
+    // Ensure the review belongs to the logged-in user
+    if (userId !== req.user.id) {
+      return res.status(403).json({ message: 'Forbidden: You cannot delete this review' });
+    }
+
+    // Delete the review
+    const deleted = await destroyReviewId(req.user.id, reviewId);
+
+    if (deleted) {
+      return res.status(204).send(); // No content response upon success
+    } else {
+      return res.status(500).json({ message: 'Failed to delete review' });
+    }
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 

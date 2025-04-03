@@ -167,6 +167,22 @@ const fetchItems = async () => {
   return response.rows;
 };
 
+// Fetch individual review by review id method
+const fetchIndividualReviewByReviewId = async ( userId, reviewId ) => {
+  try {
+    const result = await client.query('SELECT * FROM reviews WHERE user_id = $1 AND id = $2;', [userId, reviewId]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching review:', error);
+    return null;
+  }
+}
+
 // Fetch itemId method
 const fetchItemId = async (id) => {
   const SQL = `SELECT * FROM items WHERE id = $1;`;
@@ -174,9 +190,22 @@ const fetchItemId = async (id) => {
   return response.rows;
 };
 
+// Destroy reviewId method
+const destroyReviewId = async (userId, reviewId) => {
+  try {
+      const SQL = `DELETE FROM reviews WHERE user_id = $1 AND id = $2;`;
+      const result = await client.query(SQL, [userId, reviewId]);
+      return result.rowCount > 0;
+  } catch (error) {
+      console.error("Error deleting review:", error);
+      throw error;
+  }
+};
+
 const findUserByToken = async (token) => {
   try {
     console.log("Received token:", token);
+
     const payload = jwt.verify(token, process.env.JWT);
     console.log("Decoded payload:", payload);
 
@@ -184,11 +213,13 @@ const findUserByToken = async (token) => {
     const response = await client.query(SQL, [payload.id]);
 
     if (!response.rows.length) {
+      console.error("User not found in database for ID:", payload.id);
       throw new Error("User not found");
     }
+
     return response.rows[0];
   } catch (ex) {
-    console.error("Error decoding token:", ex.message);
+    console.error("Error decoding token or finding user:", ex.message);
     throw new Error("Not authorized");
   }
 };
@@ -252,8 +283,7 @@ const findCommentsByMe = async (userId) => {
   }
 };
 
-//Find comment by id
-
+// Find comment by ID
 const findCommentById = async (commentId)  => {
   try {
     const SQL = `SELECT * FROM comments WHERE id =$1`;
@@ -269,6 +299,7 @@ const findCommentById = async (commentId)  => {
   }
 };
 
+// Delete commend by ID
 const deleteCommentById = async (commentId) => {
   try {
     const SQL = `DELETE FROM comments WHERE id = $1 RETURNING *`;
@@ -301,5 +332,7 @@ module.exports = {
   fetchItemId,
   getReviewsByItemId,
   findCommentById,
-  deleteCommentById
+  deleteCommentById,
+  fetchIndividualReviewByReviewId,
+  destroyReviewId
 };

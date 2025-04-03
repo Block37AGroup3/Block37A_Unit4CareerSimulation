@@ -252,6 +252,10 @@ const findCommentsByMe = async (userId) => {
   }
 };
 
+//Find comment by id
+
+const findCommentById = async (commentId) 
+
 module.exports = {
   client,
   connectDB,

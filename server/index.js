@@ -190,8 +190,7 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   }
 });
 
-//Define PUT /api/users/:userId/reviews/:reviewId route
-
+// Define PUT /api/users/:userId/reviews/:reviewId route
 app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, next) => {
   try {
     const { rating, review_text } = req.body;
@@ -226,8 +225,6 @@ app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, nex
 });
 
 //GET review for item by review id 
-
-
 app.get("/api/items/:itemId/reviews/:reviewId", async (req, res, next) => {
   const { itemId, reviewId } = req.params;
   try {
@@ -256,8 +253,8 @@ app.get("/api/items/:itemId/reviews/:reviewId", async (req, res, next) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-// Define PUT /api/users/:userId/comments/:commentId route
 
+// Define PUT /api/users/:userId/comments/:commentId route
 app.put("/api/users/:userId/comments/:commentId", isLoggedIn, async (req, res, next) => {
   try {
     const { comment_text } = req.body;
@@ -394,6 +391,46 @@ app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) 
   } catch (error) {
     console.error('Error deleting review:', error);
     return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// POST /api/items/:itemId/reviews/:reviewId/comments route
+app.post("/api/items/:itemId/reviews/:reviewId/comments", isLoggedIn, async (req, res, next) => {
+  try { 
+    const { itemId, reviewId } = req.params;
+    const { user_id, comment_text } = req.body;
+
+    if (!user_id || !comment_text) {
+      return res.status(400).json({ error: "User ID and comment text are required." });
+    }
+
+    // Check if the review exists
+    const reviewExists = await client.query(
+      "SELECT * FROM reviews WHERE id = $1",
+      [reviewId]
+    );
+    if (reviewExists.rows.length === 0) {
+      return res.status(404).json({ error: "Review not found." });
+    }
+
+    // Check if the user has already commented on this review
+    const existingComment = await client.query(
+      "SELECT * FROM comments WHERE review_id = $1 AND user_id = $2",
+      [reviewId, user_id]
+    );
+    if (existingComment.rows.length > 0) {
+      return res.status(400).json({ error: "User has already commented on this review." });
+    }
+
+    const newComment = await createComment({
+      review_id: reviewId,
+      user_id: user_id,
+      comment_text,
+    });
+
+    res.status(201).json(newComment);
+  } catch (error) {
+    next(error);
   }
 });
 

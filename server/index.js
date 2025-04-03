@@ -50,8 +50,7 @@ const init = async () => {
 
   console.log("----------");
   console.log("Helpful CURL commands to test:");
-  console.log(`curl -X GET http://localhost:${port}/api/items`);
-  console.log(`curl -X GET http://localhost:${port}/api/items/[ITEM_ID]`);
+
   console.log(
     `curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`
   );
@@ -61,17 +60,27 @@ const init = async () => {
   console.log(
     `curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`
   );
+
+  console.log(`curl -X GET http://localhost:3000/api/items`);
+  console.log(`curl -X GET http://localhost:3000/api/items/ITEM_ID`);
+  console.log(`curl -X GET http://localhost:3000/api/items/ITEM_ID/reviews`);
+  console.log(`curl -X GET http://localhost:3000/api/items/ITEM_ID/reviews/REVIEW_ID`);
+
   console.log(
-    `curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`
+    `curl -X POST http://localhost:3000/api/items/ITEM_ID/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`
   );
-  console.log(`curl -X DELETE http://localhost:${port}/api/users/[USER_ID]/reviews/[REVIEW_ID] -H "Authorization: Bearer [PUT_TOKEN_HERE]"`);
-  console.log(`curl -X GET http://localhost:${port}/api/items/ITEM_ID/reviews`);
-  console.log(`curl -X GET http://localhost:${port}/api/items/ITEM_ID/reviews/REVIEW_ID`);
   console.log(`curl -X GET http://localhost:3000/api/reviews/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
+  console.log(`TODO: CURL PUT /api/users/:userId/reviews/:reviewId`);
+
+  console.log(
+    `curl -X POST http://localhost:3000/api/items/ITEM_ID/reviews/REVIEW_ID/comments -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"review_id": REVIEW_ID, "user_id": USER_ID, "comment_text": "Greatest comment ever!"}'`
+  );
   console.log(`curl -X GET http://localhost:3000/api/comments/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
+  console.log(`TODO: PUT /api/users/:userId/comments/:commentId`);
+  console.log(`curl -X DELETE http://localhost:3000/api/users/[USER_ID]/comments/COMMENT_ID -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
+  console.log(`curl -X DELETE http://localhost:3000/api/users/[USER_ID]/reviews/REVIEW_ID -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
+
   console.log("----------");
-  
-  // TODO:
 
   app.listen(port, () => console.log(`listening on PORT ${port}`));
 };

@@ -70,7 +70,11 @@ const createUser = async ({ username, password_hash }) => {
     VALUES ($1, $2, $3)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), username, await bcrypt.hash(password_hash, 5)]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    username,
+    await bcrypt.hash(password_hash, 5),
+  ]);
   return response.rows[0];
 };
 
@@ -80,7 +84,12 @@ const createItem = async ({ name, description, average_rating }) => {
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), name, description, average_rating]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    name,
+    description,
+    average_rating,
+  ]);
   return response.rows[0];
 };
 
@@ -90,7 +99,13 @@ const createReview = async ({ user_id, item_id, rating, review_text }) => {
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), user_id, item_id, rating, review_text]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    user_id,
+    item_id,
+    rating,
+    review_text,
+  ]);
   return response.rows[0];
 };
 
@@ -100,8 +115,22 @@ const createComment = async ({ review_id, user_id, comment_text }) => {
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const response = await client.query(SQL, [uuid.v4(), review_id, user_id, comment_text]);
+  const response = await client.query(SQL, [
+    uuid.v4(),
+    review_id,
+    user_id,
+    comment_text,
+  ]);
   return response.rows[0];
+};
+
+const getReviewsByItemId = async (item_id) => {
+  const SQL = /*sql*/ `
+    SELECT * FROM items
+    WHERE id = $1;
+  `;
+  const response = await client.query(SQL, [item_id]);
+  return response.rows;
 };
 
 // authentication
@@ -113,14 +142,20 @@ const authenticateUser = async ({ username, password_hash }) => {
     WHERE username = $1;
   `;
   const response = await client.query(SQL, [username]);
-  if (!response.rows.length || (await bcrypt.compare(password_hash, response.rows[0].password_hash)) === false) {
+  if (
+    !response.rows.length ||
+    (await bcrypt.compare(password_hash, response.rows[0].password_hash)) ===
+      false
+  ) {
     console.error("Invalid username or password");
     const error = Error("not authorized");
     error.status = 401;
     throw error;
   }
 
-  const token = jwt.sign({ id: response.rows[0].id }, process.env.JWT, { algorithm: "HS256" });
+  const token = jwt.sign({ id: response.rows[0].id }, process.env.JWT, {
+    algorithm: "HS256",
+  });
   console.log("Generated Token:", token);
   return { token };
 };
@@ -133,7 +168,7 @@ const fetchItems = async () => {
 };
 
 // Fetch itemId method
-const fetchItemId = async(id) => {
+const fetchItemId = async (id) => {
   const SQL = `SELECT * FROM items WHERE id = $1;`;
   const response = await client.query(SQL, [id]);
   return response.rows;
@@ -159,7 +194,6 @@ const findUserByToken = async (token) => {
 };
 
 //GET review by itemId and reviewId
-
 const findReviewById = async (itemId, reviewId) => {
   try {
     const SQL = `
@@ -226,12 +260,12 @@ module.exports = {
   createItem,
   createReview,
   createComment,
-  fetchItems,
-  fetchItemId,
   authenticateUser,
   findUserByToken,
-  findReviewsByMe,
   findCommentsByMe, 
   findReviewById, 
-  findReviewsByMe
-  }; 
+  findReviewsByMe,
+  fetchItems,
+  fetchItemId,
+  getReviewsByItemId,
+};

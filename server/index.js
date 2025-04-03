@@ -12,7 +12,8 @@ const {
   findUserByToken,
   findReviewById,
   findReviewsByMe, 
-  findCommentsByMe
+  findCommentsByMe,
+  getReviewsByItemId,
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -47,10 +48,18 @@ const init = async () => {
   console.log("Helpful CURL commands to test:");
   console.log(`curl -X GET http://localhost:${port}/api/items`);
   console.log(`curl -X GET http://localhost:${port}/api/items/[ITEM_ID]`);
-  console.log(`curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`);
-  console.log(`curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`);
-  console.log(`curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
-  console.log(`curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`);
+  console.log(
+    `curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d '{"username": "test.test", "password": "securepassword"}'`
+  );
+  console.log(
+    `curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "test.test", "password_hash": "securepassword"}'`
+  );
+  console.log(
+    `curl -X GET http://localhost:3000/api/auth/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`
+  );
+  console.log(
+    `curl -X POST http://localhost:3000/api/items/{ITEM_ID}/reviews -H "Authorization: Bearer YOUR_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great product!"}'`
+  );
 
   // TODO:
   // Add CURL command for GET items/itemid/reviews
@@ -108,7 +117,9 @@ app.post("/api/auth/register", async (req, res, next) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required" });
+      return res
+        .status(400)
+        .json({ error: "Username and password are required" });
     }
     const newUser = await createUser({ username, password_hash: password });
     res.status(201).json(newUser);
@@ -136,9 +147,15 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
   try {
     const { rating, review_text } = req.body;
     if (typeof rating !== "number" || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: "Rating must be a number between 1 and 5." });
+      return res
+        .status(400)
+        .json({ error: "Rating must be a number between 1 and 5." });
     }
-    if (!review_text || typeof review_text !== "string" || review_text.trim() === "") {
+    if (
+      !review_text ||
+      typeof review_text !== "string" ||
+      review_text.trim() === ""
+    ) {
       return res.status(400).json({ error: "Review text is required." });
     }
 
@@ -147,13 +164,15 @@ app.post("/api/items/:itemId/reviews", isLoggedIn, async (req, res, next) => {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    const existingReview = await client.query("SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2", [
-      req.user.id,
-      req.params.itemId,
-    ]);
+    const existingReview = await client.query(
+      "SELECT * FROM reviews WHERE user_id = $1 AND item_id = $2",
+      [req.user.id, req.params.itemId]
+    );
 
     if (existingReview.rows.length > 0) {
-      return res.status(409).json({ error: "You have already reviewed this item." });
+      return res
+        .status(409)
+        .json({ error: "You have already reviewed this item." });
     }
 
     const review = await createReview({
@@ -200,11 +219,10 @@ app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
 });
 
 //GET /api/reviews/me route
-
-app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
+app.get("/api/reviews/me", isLoggedIn, async (req, res) => {
   try {
     const reviews = await findReviewsByMe(req.user.id);
-   
+
     if (reviews.length > 0) {
       res.json(reviews);
     } else {
@@ -217,7 +235,6 @@ app.get('/api/reviews/me', isLoggedIn, async (req, res) => {
 });
 
 //GET /api/comments/me route
-
 app.get('/api/comments/me', isLoggedIn, async (req, res) => {
   try {
     const comments = await findCommentsByMe(req.user.id);
@@ -233,7 +250,24 @@ app.get('/api/comments/me', isLoggedIn, async (req, res) => {
   }
 });
 
+// GET /api/items/:itemId/reviews
+app.get("/api/items/:itemId/reviews", async (req, res) => {
+  try {
+    const { itemId } = req.params;
 
+    const reviews = await getReviewsByItemId(itemId);
+
+    if (!reviews.length) {
+      return res
+        .status(404)
+        .json({ message: "No reviews found for this item" });
+    }
+
+    return res.status(200).json(reviews);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 init();
-

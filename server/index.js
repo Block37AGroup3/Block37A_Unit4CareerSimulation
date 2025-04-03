@@ -17,7 +17,7 @@ const {
   findCommentById,
   deleteCommentById,
   fetchIndividualReviewByReviewId,
-  destroyReviewId
+  destroyReviewId,
 } = require("./db.js");
 
 const { seedData } = require("./seed.js");
@@ -74,8 +74,12 @@ const init = async () => {
   );
   console.log(`curl -X GET http://localhost:3000/api/comments/me -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
   console.log(`TODO: PUT /api/users/:userId/comments/:commentId`);
-  console.log(`curl -X DELETE http://localhost:3000/api/users/[USER_ID]/comments/COMMENT_ID -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
-  console.log(`curl -X DELETE http://localhost:3000/api/users/[USER_ID]/reviews/REVIEW_ID -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`);
+  console.log(
+    `curl -X DELETE http://localhost:3000/api/users/[USER_ID]/comments/COMMENT_ID -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`
+  );
+  console.log(
+    `curl -X DELETE http://localhost:3000/api/users/[USER_ID]/reviews/REVIEW_ID -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"`
+  );
 
   console.log("----------");
 
@@ -119,9 +123,24 @@ app.get("/api/auth/me", isLoggedIn, (req, res, next) => {
 // POST/api/auth/login route
 app.post("/api/auth/login", async (req, res, next) => {
   try {
-    res.send(await authenticateUser(req.body));
-  } catch (ex) {
-    next(ex);
+    const { username, password_hash } = req.body;
+
+    if (!username || !password_hash) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+    const user = await client.query("SELECT * FROM users WHERE username = $1", [username]);
+    if (!user.rows.length) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const isValidPassword = await bcrypt.compare(password_hash, user.rows[0].password_hash);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+    const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT, { expiresIn: "1h" });
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error("Error during login:", error);
+    next(error);
   }
 });
 
@@ -224,7 +243,7 @@ app.put("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res, nex
   }
 });
 
-//GET review for item by review id 
+//GET review for item by review id
 app.get("/api/items/:itemId/reviews/:reviewId", async (req, res, next) => {
   const { itemId, reviewId } = req.params;
   try {
@@ -281,7 +300,6 @@ app.put("/api/users/:userId/comments/:commentId", isLoggedIn, async (req, res, n
   } catch (error) {
     console.error("Error updating review:", error);
     res.status(500).json({ error: "Failed to update review" });
-
   }
 });
 
@@ -356,7 +374,7 @@ app.delete("/api/users/:userId/comments/:commentId", isLoggedIn, async (req, res
       return res.status(500).json({ error: "Failed to delete comment" });
     }
 
-    res.status(200).json({ message: "Comment deleted "});
+    res.status(200).json({ message: "Comment deleted " });
   } catch (error) {
     console.error("Error deleting comment", error);
     next(error);
@@ -364,7 +382,7 @@ app.delete("/api/users/:userId/comments/:commentId", isLoggedIn, async (req, res
 });
 
 // DELETE /api/users/:userId/reviews/:reviewId route
-app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) => {
+app.delete("/api/users/:userId/reviews/:reviewId", isLoggedIn, async (req, res) => {
   try {
     const { userId, reviewId } = req.params;
 
@@ -372,12 +390,12 @@ app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) 
     const review = await fetchIndividualReviewByReviewId(userId, reviewId);
     console.log(`review: `, review);
     if (!review) {
-      return res.status(404).json({ message: 'Review not found' });
+      return res.status(404).json({ message: "Review not found" });
     }
 
     // Ensure the review belongs to the logged-in user
     if (userId !== req.user.id) {
-      return res.status(403).json({ message: 'Forbidden: You cannot delete this review' });
+      return res.status(403).json({ message: "Forbidden: You cannot delete this review" });
     }
 
     // Delete the review
@@ -386,17 +404,17 @@ app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) 
     if (deleted) {
       return res.status(204).send(); // No content response upon success
     } else {
-      return res.status(500).json({ message: 'Failed to delete review' });
+      return res.status(500).json({ message: "Failed to delete review" });
     }
   } catch (error) {
-    console.error('Error deleting review:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Error deleting review:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
 // POST /api/items/:itemId/reviews/:reviewId/comments route
 app.post("/api/items/:itemId/reviews/:reviewId/comments", isLoggedIn, async (req, res, next) => {
-  try { 
+  try {
     const { itemId, reviewId } = req.params;
     const { user_id, comment_text } = req.body;
 
@@ -405,19 +423,16 @@ app.post("/api/items/:itemId/reviews/:reviewId/comments", isLoggedIn, async (req
     }
 
     // Check if the review exists
-    const reviewExists = await client.query(
-      "SELECT * FROM reviews WHERE id = $1",
-      [reviewId]
-    );
+    const reviewExists = await client.query("SELECT * FROM reviews WHERE id = $1", [reviewId]);
     if (reviewExists.rows.length === 0) {
       return res.status(404).json({ error: "Review not found." });
     }
 
     // Check if the user has already commented on this review
-    const existingComment = await client.query(
-      "SELECT * FROM comments WHERE review_id = $1 AND user_id = $2",
-      [reviewId, user_id]
-    );
+    const existingComment = await client.query("SELECT * FROM comments WHERE review_id = $1 AND user_id = $2", [
+      reviewId,
+      user_id,
+    ]);
     if (existingComment.rows.length > 0) {
       return res.status(400).json({ error: "User has already commented on this review." });
     }

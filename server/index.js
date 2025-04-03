@@ -14,6 +14,7 @@ const {
   findReviewsByMe, 
   findCommentsByMe,
   getReviewsByItemId,
+  fetchIndividualReviewByReviewId,
   destroyReviewId
 } = require("./db.js");
 
@@ -195,28 +196,28 @@ app.get('/api/items/:itemId/reviews/:reviewId', async (req, res, next) => {
   try {
     const item = await fetchItemId(itemId); 
 
-  if (item.length === 0) {
-    return res.status(404).json({ error: 'Item not found' });
-  }
+    if (item.length === 0) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
 
-  const review = await findReviewById(itemId, reviewId);
+    const review = await findReviewById(itemId, reviewId);
 
-  if (review) {
-    res.json({
-      item_id: itemId,
-      review_id: review.review_id,
-      review_text: review.review_text, 
-      rating: review.rating,
-      username: review.username,
-      created_at: review.created_at
-    });
-  } else {
-    res.status(404).json({ error: 'Review not found' });
+    if (review) {
+      res.json({
+        item_id: itemId,
+        review_id: review.review_id,
+        review_text: review.review_text, 
+        rating: review.rating,
+        username: review.username,
+        created_at: review.created_at
+      });
+    } else {
+      res.status(404).json({ error: 'Review not found' });
+    }
+  } catch (error) {
+    console.error("Error fetching review:", error);
+    res.status(500).json({ error: "Server error" });
   }
-} catch (error) {
-  console.error("Error fetching review:", error);
-  res.status(500).json({ error: "Server error" });
-}
 });
 
 //GET /api/reviews/me route
@@ -272,30 +273,33 @@ app.get("/api/items/:itemId/reviews", async (req, res) => {
 });
 
 // DELETE /api/users/:userId/reviews/:reviewId route
-app.delete('/api/users/:userId/reviews/:reviewId', isLoggedIn, async (req, res) => {
+app.delete('/api/reviews/:reviewId', isLoggedIn, async (req, res) => {
   try {
-    // Ensuring the user is authenticated
-    if (!req.user) {
-      return res.status(401).json({ message: 'Unauthorized: Please log in' });
-    }
+    const { reviewId } = req.params;
 
-    // Checking if the review exists
-    const review = await findReviewById(reviewId);
+    // Fetch the review by reviewId
+    const review = await fetchIndividualReviewByReviewId(reviewId);
+    console.log(`review: `, review);
     if (!review) {
       return res.status(404).json({ message: 'Review not found' });
     }
 
-    // Ensuring the review belongs to the logged-in user
+    // Ensure the review belongs to the logged-in user
     if (review.user_id !== req.user.id) {
       return res.status(403).json({ message: 'Forbidden: You cannot delete this review' });
     }
 
-    await destroyReviewId(userId, reviewId);
+    // Delete the review
+    const deleted = await destroyReviewId(req.user.id, reviewId);
 
-    // Return 204 No Content status code
-    return res.status(204).send();
+    if (deleted) {
+      return res.status(204).send(); // No content response upon success
+    } else {
+      return res.status(500).json({ message: 'Failed to delete review' });
+    }
   } catch (error) {
-      return res.status(500).json({ message: 'Internal server error' });
+    console.error('Error deleting review:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
